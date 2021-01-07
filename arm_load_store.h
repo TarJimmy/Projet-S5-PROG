@@ -26,6 +26,7 @@ Contact: Guillaume.Huard@imag.fr
 #include <stdint.h>
 #include "arm_core.h"
 
+int number_set_bits_in(uint16_t n);
 int arm_load_store(arm_core p, uint32_t ins);
 int arm_load_store_multiple(arm_core p, uint32_t ins);
 int arm_coprocessor_load_store(arm_core p, uint32_t ins);

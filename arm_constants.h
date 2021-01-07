@@ -62,6 +62,11 @@ Contact: Guillaume.Huard@imag.fr
 #define PrivMask    0x0000000F
 #define StateMask   0x00000020
 
+/* REGISTERS */
+#define SP 13
+#define LR 14
+#define PC 15
+
 char *arm_get_exception_name(unsigned char exception);
 char *arm_get_mode_name(uint8_t mode);
 char *arm_get_register_name(uint8_t reg);

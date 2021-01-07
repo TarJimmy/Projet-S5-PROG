@@ -25,8 +25,24 @@ Contact: Guillaume.Huard@imag.fr
 #include "arm_constants.h"
 #include "util.h"
 #include "debug.h"
+#include <assert.h>
 
-int condition(uint8_t cpsr, uint8_t cond);
+int number_set_bits_in(uint16_t n) {
+	int count = 0;
+	int mask = 1;
+	for (int i = 0; i < 16; i++)
+	{
+		if ((mask & n) == mask)
+			count++;
+		mask = mask << 1;
+	}
+	return count;
+}
+
+
+int condition(uint8_t cpsr, uint8_t cond){
+    return 1;
+}
 int arm_load_store(arm_core p, uint32_t ins) {
     uint8_t I_bit = get_bit(ins, 25);
         uint8_t P_bit = get_bit(ins, 24);
@@ -50,6 +66,159 @@ int arm_load_store(arm_core p, uint32_t ins) {
 }
 
 int arm_load_store_multiple(arm_core p, uint32_t ins) {
+     uint8_t cond = get_bits(ins, 31, 28);
+	uint8_t P_bit = get_bit(ins, 24);
+	uint8_t U_bit = get_bit(ins, 23);
+	uint8_t S_bit = get_bit(ins, 22);
+	uint8_t W_bit = get_bit(ins, 21);
+	uint8_t L_bit = get_bit(ins, 20);
+    uint8_t Rn = get_bits(ins, 19, 16);
+	uint16_t register_list = get_bits(ins, 15, 0);
+
+	uint32_t cpsr;
+	if (L_bit == 1 && Rn == 15) { // Si c'est un load de PC le bit S indique si CPSR vient de SPSR
+		cpsr = arm_read_spsr(p);
+    } else {
+        cpsr = arm_read_cpsr(p);
+    }
+
+    uint32_t start_address,end_address;
+    // Before
+    if(P_bit) {
+        // decrement before
+        if (U_bit) {
+            start_address = Rn - (number_set_bits_in(register_list) * 4);
+            end_address = Rn - 4;
+            if (condition(cpsr, cond) && W_bit == 1) {
+                Rn = Rn - (number_set_bits_in(register_list) * 4);
+            }
+        // Increment before
+        } else {
+            start_address = Rn + 4;
+            end_address = Rn + (number_set_bits_in(register_list) * 4);
+            if (condition(cpsr, cond) && W_bit == 1) {
+                Rn = Rn + (number_set_bits_in(register_list) * 4);
+            }
+        }
+
+    // After
+    } else {
+        // decrement after
+        if (U_bit) {
+            start_address = Rn - (number_set_bits_in(register_list) * 4) + 4;
+            end_address = Rn;
+            if (condition(cpsr, cond) && W_bit == 1) {
+                Rn = Rn - (number_set_bits_in(register_list) * 4);
+            }
+        // Increment after
+        } else {
+            start_address = Rn;
+            end_address = Rn + (number_set_bits_in(register_list) * 4) - 4;
+            if (condition(cpsr, cond) && W_bit == 1) {
+                Rn = Rn + (number_set_bits_in(register_list) * 4);
+            }
+        }
+    }
+
+    
+    uint32_t address;
+    uint32_t value; // Pour LDM
+    // LDM Page A4-36 Doc
+    if(L_bit) {
+        // LDM (2)
+        debug("LDM :");
+        if (S_bit && get_bit(register_list, 15) == 0 && W_bit == 0) {
+            //MemoryAccess(B-bit, E-bit)
+            if (condition(cpsr, cond)) {
+                address = start_address;
+                for (int i = 0; i <= 14; i++) {
+                    if (get_bit(register_list, i) == 1) {
+                        arm_read_word(p, address, &value);
+                        arm_write_usr_register(p, i, value);
+                        address = address + 4;
+                    }
+                }
+                assert(end_address == (address - 4));
+            }
+        // LDM (3)
+        } else if (S_bit && get_bit(register_list, 15) == 1){
+            //MemoryAccess(B-bit, E-bit)
+            
+            if (condition(cpsr, cond)) {
+                address = start_address;
+                for (int i = 0; i <= 14; i++) {
+                    if (get_bit(register_list, i) == 1) {
+                        arm_read_word(p, address, &value);
+                        arm_write_register(p, i, value);
+                        address = address + 4;
+                    }
+                }
+                if (arm_current_mode_has_spsr(p)) {
+                    cpsr = arm_read_spsr(p);
+                } else {
+                    return UNDEFINED_INSTRUCTION;
+                }
+                arm_read_word(p, address, &value);
+                arm_write_register(p, 15, value); // PC = value
+                address = address + 4;
+                assert(end_address == (address - 4));
+            }
+
+        // LDM (1)
+        } else {
+            //MemoryAccess(B-bit, E-bit)
+            if (condition(cpsr, cond)) {
+                address = start_address;
+                for (int i = 0; i <= 14; i++) {
+                    if (get_bit(register_list, i) == 1) {
+                        arm_read_word(p, address, &value);
+                        arm_write_register(p, i, value);
+                        address = address + 4;
+                    }
+                }
+                if (get_bit(register_list, 15) == 1) {
+                    value = arm_read_word(p, address, &value);
+                    arm_write_register(p, 15, value & 0xFFFFFFFE);
+                    //T Bit = value[0]; 
+                    address = address + 4;
+                }
+                assert(end_address == (address - 4));
+		    }
+
+        }
+    // STM Page A4-189 Doc
+    } else {
+        debug("STM :");
+        // STM (1)
+        if (!S_bit && !L_bit) {
+            // MemoryAccess(B-bit, E-bit)
+            if (condition(cpsr, cond)) {
+                address = start_address;
+                for (int i = 0; i <= 15; i++) {
+                    if (get_bit(register_list, i) == 1) {
+                        value = arm_read_register(p, i);
+                        arm_write_word(p, address, value);
+                        address = address + 4;
+                    }
+                }
+                assert(end_address == (address - 4));
+		    }
+        // STM (2)
+        } else {
+            //MemoryAccess(B-bit, E-bit)
+            if (condition(cpsr, cond)) {
+                address = start_address;
+                for (int i = 0; i <= 15; i++) {
+                     if (get_bit(register_list, i) == 1) {
+                        value = arm_read_usr_register(p, i);
+                        arm_write_word(p, address, value);
+                        address = address + 4;
+                    }
+                }
+                assert(end_address == (address - 4));
+            }
+        }
+    }
     return UNDEFINED_INSTRUCTION;
 }
 
