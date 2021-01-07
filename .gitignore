@@ -1,0 +1,10 @@
+.vscode/
+.vs/
+**/*.o
+
+Makefile
+config.log
+.deps/
+autom4te.cache/
+build-aux/
+Examples/
