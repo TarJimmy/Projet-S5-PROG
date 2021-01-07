@@ -26,12 +26,179 @@ Contact: Guillaume.Huard@imag.fr
 #include "arm_branch_other.h"
 #include "util.h"
 #include "debug.h"
+#include "decode.h"
 
 /* Decoding functions for different classes of instructions */
 int arm_data_processing_shift(arm_core p, uint32_t ins) {
-    return UNDEFINED_INSTRUCTION;
+	uint8_t Rn = get_bits(ins, 19, 16);
+	uint8_t Rd = get_bits(ins, 15, 12);
+	uint32_t val_cpsr = arm_read_cpsr(p);
+	int C_flag = (val_cpsr >> C) & 1;
+	uint32_t value = 0;
+	
+	switch (ins >> 20)
+	{
+		case 0b0000: //AND
+			value = arm_read_register(p, Rn) & shift(p,ins);
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b0001: //EOR
+			value = arm_read_register(p, Rn) ^ shift(p,ins);
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b0010: //SUB
+			value = arm_read_register(p, Rn) - shift(p,ins);
+			arm_write_register(p, Rd, value);
+			break;
+		case 0b0011: //RSB
+			value = shift(p,ins) - arm_read_register(p, Rn);
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b0100: //ADD
+			value = arm_read_register(p, Rn) + shift(p,ins);
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b0101: //ADC
+			value = arm_read_register(p, Rn) + shift(p,ins) + C_flag;
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b0110: //SBC
+			value = arm_read_register(p, Rn) - shift(p,ins) - !C_flag;
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b0111: //RSC
+			value = shift(p,ins) - arm_read_register(p, Rn) - !C_flag;
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b1000: //TST
+			break;
+			
+		case 0b1001: //TEQ
+			break;
+			
+		case 0b1010: //CMP
+			break;
+			
+		case 0b1011: //CMN
+			break;
+			
+		case 0b1100: //ORR
+			value = arm_read_register(p, Rn) | shift(p,ins);
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b1101: //MOV
+			arm_write_register(p, Rd, shift(p,ins));
+			break;
+			
+		case 0b1110: //BIC
+			value = arm_read_register(p, Rn) & !(shift(p,ins));
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b1111: //MVN
+			arm_write_register(p, Rd, !(shift(p,ins)));
+			break;
+			
+		default:
+    		return UNDEFINED_INSTRUCTION;
+    }
+    return 0; //tout c'est bien passé
 }
 
 int arm_data_processing_immediate_msr(arm_core p, uint32_t ins) {
-    return UNDEFINED_INSTRUCTION;
+	uint8_t Rn = get_bits(ins, 19, 16);
+	uint8_t Rd = get_bits(ins, 15, 12);
+	uint8_t imm = get_bits(ins, 7, 0); //valeur immédiate
+	uint32_t val_cpsr = arm_read_cpsr(p);
+	int C_flag = (val_cpsr >> C) & 1;
+	uint32_t value = 0;
+	
+	switch (ins >> 20)
+	{
+		case 0b0000: //AND
+			value = arm_read_register(p, Rn) & imm;
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b0001: //EOR
+			value = arm_read_register(p, Rn) ^ imm;
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b0010: //SUB
+			value = arm_read_register(p, Rn) - imm;
+			arm_write_register(p, Rd, value);
+			break;
+		case 0b0011: //RSB
+			value = imm - arm_read_register(p, Rn);
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b0100: //ADD
+			value = arm_read_register(p, Rn) + imm;
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b0101: //ADC
+			value = arm_read_register(p, Rn) + imm + C_flag;
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b0110: //SBC
+			value = arm_read_register(p, Rn) - imm - !C_flag;
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b0111: //RSC
+			value = imm - arm_read_register(p, Rn) - !C_flag;
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b1000: //TST
+			break;
+			
+		case 0b1001: //TEQ
+			break;
+			
+		case 0b1010: //CMP
+			break;
+			
+		case 0b1011: //CMN
+			break;
+			
+		case 0b1100: //ORR
+			value = arm_read_register(p, Rn) | imm;
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b1101: //MOV
+			arm_write_register(p, Rd, imm);
+			break;
+			
+		case 0b1110: //BIC
+			value = arm_read_register(p, Rn) & !imm;
+			arm_write_register(p, Rd, value);
+			break;
+			
+		case 0b1111: //MVN
+			arm_write_register(p, Rd, !imm);
+			break;
+			
+		default:
+    		return UNDEFINED_INSTRUCTION;
+    }
+    return 0; //tout c'est bien passé
 }
+
+
+
+
+
