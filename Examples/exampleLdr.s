@@ -8,15 +8,6 @@
 .text
 
 main:
-<<<<<<< HEAD
-    mov r0, #5
-loop:
-    bl decr
-    bne loop
-end:
-    swi 0x123456
-.data
-=======
 @ Immediate offset
   ldr r0, ptr_a
   sub r0, r0, #1
@@ -79,4 +70,3 @@ end:
   ptr_a: .word A
   ptr_b: .word B
   ptr_c: .word C
->>>>>>> e4db0ff4a058d41a8e323fe668e00bffc666fabb

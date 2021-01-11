@@ -17,7 +17,7 @@ endif
 bin_PROGRAMS=arm_simulator send_irq memory_test
 
 COMMON=csapp.h csapp.c scanner.h scanner.l debug.h debug.c \
-       gdb_protocol.h gdb_protocol.c util.h util.c trace.h trace.c \
+       gdb_protocol.h gdb_protocol.c util.h util.c decode.h decode.c trace.h trace.c \
        memory.h memory.c trace_location.h no_trace_location.h \
        registers.h registers.c \
        arm.h arm.c \

@@ -2,10 +2,15 @@
 .vs/
 *.o
 
+<<<<<<< HEAD
 aclocal.m4
 Makefile
 config.log
 config.status
+=======
+Makefile
+config.log
+>>>>>>> e4db0ff4a058d41a8e323fe668e00bffc666fabb
 .deps/
 autom4te.cache/
 build-aux/
