@@ -44,17 +44,18 @@ int condition(uint8_t cpsr, uint8_t cond){
     return 1;
 }
 int arm_load_store(arm_core p, uint32_t ins) {
+    printf("ici cest arm_load_store\n");
     uint8_t I_bit = get_bit(ins, 25);
-        uint8_t P_bit = get_bit(ins, 24);
-        uint8_t U_bit = get_bit(ins, 23);
-        uint8_t B_bit = get_bit(ins, 22);
-        uint8_t W_bit = get_bit(ins, 21);
-        uint8_t L_bit = get_bit(ins, 20);
-        uint8_t rn = (uint8_t)get_bits(ins, 19, 16);
-        uint8_t rd = (uint8_t)get_bits(ins, 15, 12);
-        uint16_t data = (uint16_t)get_bits(ins, 11, 0);
-        uint8_t cond = get_bits(ins, 31, 28);
-        int result;
+    uint8_t P_bit = get_bit(ins, 24);
+    uint8_t U_bit = get_bit(ins, 23);
+    uint8_t B_bit = get_bit(ins, 22);
+    uint8_t W_bit = get_bit(ins, 21);
+    uint8_t L_bit = get_bit(ins, 20);
+    uint8_t rn = (uint8_t)get_bits(ins, 19, 16);
+    uint8_t rd = (uint8_t)get_bits(ins, 15, 12);
+    uint16_t data = (uint16_t)get_bits(ins, 11, 0);
+    uint8_t cond = get_bits(ins, 31, 28);
+    int result;
     if (get_bits(ins, 27,26) == 0b01) {
         //Load and store word or unsigned byte instructions
         result = word_byte_load_store(p, I_bit, P_bit, U_bit, B_bit, W_bit, L_bit, rn, rd, data, cond);
@@ -340,6 +341,7 @@ int word_byte_load_store(arm_core p, uint8_t I_bit, uint8_t P_bit, uint8_t U_bit
             //Load instruction
             if (B_bit == 0) {
                 //ldr
+                printf("ici cest ldr");
                 debug("LDR rd: r%d, addr: %x\n", rd, address);
                 uint32_t value;
                 error = arm_read_word(p, address, &value);
