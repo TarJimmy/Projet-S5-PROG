@@ -122,50 +122,37 @@ static int arm_execute_instruction(arm_core p) {
         uint8_t typeop = get_bits(instruction, 27, 25);
         switch (typeop) {
             case 0:
-                if (get_bits(instruction, 24, 20) == 0b10010 && get_bits(instruction, 7, 6) == 0b00){
-                    arm_coprocessor_others_swi(p, instruction);
-                } else if (get_bit(instruction, 4) == 0 || get_bit(instruction, 7) == 0) {
+               if (get_bit(instruction, 4) == 0 || get_bit(instruction, 7) == 0) {
                     // Data processing immediate shift or register shift
-                    arm_data_processing_shift(p, instruction);
+                    return arm_data_processing_shift(p, instruction);
                 } else if (get_bit(instruction, 7) == 1 && get_bit(instruction, 4) == 1) {
                     //Extra load/stores
-                    arm_load_store(p, instruction);
+                    return arm_load_store(p, instruction);
                 }  else {
-                    arm_miscellaneous(p, instruction);
+                    return arm_miscellaneous(p, instruction);
                 }
-                break;
             case 1:
                 //MSR: Immediate operand
-                arm_data_processing_immediate_msr(p, instruction);
-            break;
+                return arm_data_processing_immediate_msr(p, instruction);
             case 2: 
                 //Load and Store: Immediate offset/index
-                arm_load_store(p, instruction);
-                break;
+                return arm_load_store(p, instruction);
             case 3 :
                 //Load and Store: Register offset/index
-                arm_load_store(p, instruction);
-                // Media instructions and Architecturally undefined
-                break;
-            default:
+                return arm_load_store(p, instruction);
             case 4:
-                arm_load_store_multiple(p, instruction);
-            break;
+                return arm_load_store_multiple(p, instruction);
             case 5:
                 //BLX (1)
-                arm_branch(p, instruction);
-            break;
+                return arm_branch(p, instruction);
             case 6:
                 //Load and Store Coprocessor
-                if (get_bits(instruction, 24, 21) == 0b0010){
-                    arm_coprocessor_others_swi(p, instruction);
-                } else {
-                    arm_coprocessor_load_store(p, instruction);
-                }
+                return arm_coprocessor_load_store(p, instruction);
             case 7:
                 //Exception-generating instructions
-                arm_coprocessor_others_swi(p, instruction);
-            break;
+                return arm_coprocessor_others_swi(p, instruction);
+            default:
+                return UNDEFINED_INSTRUCTION;
         }
     }
     return error;

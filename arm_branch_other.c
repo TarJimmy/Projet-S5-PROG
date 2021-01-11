@@ -39,7 +39,7 @@ int arm_branch(arm_core p, uint32_t ins) {
     if(get_bits(ins, 31, 28) != 0xF){
     // B, BL
         if(get_bit(ins, 24)){
-            arm_write_register(p, 14, arm_read_register(p, 15) + 8);
+            arm_write_register(p, 14, arm_read_register(p, 15) + 4);
         }
         arm_write_register(p, 15, arm_read_register(p, 15) + (signed_extend30(ins) << 2));
         return 0;
