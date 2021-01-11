@@ -122,15 +122,15 @@ static int arm_execute_instruction(arm_core p) {
         uint8_t typeop = get_bits(instruction, 27, 25);
         switch (typeop) {
             case 0:
-                if (get_bit(instruction, 4) == 0 || get_bit(instruction, 7) == 0) {
-                    //BX et BXJ rentrent dans ces conditions mais devraient etre dans miscellaneous
+                if (get_bits(instruction, 24, 20) == 0b10010 && get_bits(instruction, 7, 6) == 0b00){
+                    arm_coprocessor_others_swi(p, instruction);
+                } else if (get_bit(instruction, 4) == 0 || get_bit(instruction, 7) == 0) {
                     // Data processing immediate shift or register shift
                     arm_data_processing_shift(p, instruction);
                 } else if (get_bit(instruction, 7) == 1 && get_bit(instruction, 4) == 1) {
                     //Extra load/stores
                     arm_load_store(p, instruction);
                 }  else {
-                    //BX/BXJ
                     arm_miscellaneous(p, instruction);
                 }
                 break;
@@ -157,10 +157,13 @@ static int arm_execute_instruction(arm_core p) {
             break;
             case 6:
                 //Load and Store Coprocessor
-                arm_coprocessor_load_store(p, instruction);
+                if (get_bits(instruction, 24, 21) == 0b0010){
+                    arm_coprocessor_others_swi(p, instruction);
+                } else {
+                    arm_coprocessor_load_store(p, instruction);
+                }
             case 7:
                 //Exception-generating instructions
-                //MCR/MCRR/MRC/MRCC c'est des branchements, pas des exceptions ?
                 arm_coprocessor_others_swi(p, instruction);
             break;
         }

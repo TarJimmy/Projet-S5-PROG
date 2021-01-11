@@ -29,7 +29,7 @@ Contact: Guillaume.Huard@imag.fr
 int32_t signed_extend30(uint32_t ins){
     int32_t mod = get_bits(ins, 23, 0);
     if (get_bit(ins,23)){
-        return 0b111111 | mod;
+        return (0x3F << 24) | mod;
     } else {
         return mod;
     }
