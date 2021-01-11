@@ -1,0 +1,12 @@
+.vscode/
+.vs/
+*.o
+
+aclocal.m4
+Makefile
+config.log
+config.status
+.deps/
+autom4te.cache/
+build-aux/
+Examples/

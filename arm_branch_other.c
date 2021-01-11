@@ -27,30 +27,24 @@ Contact: Guillaume.Huard@imag.fr
 #include <stdlib.h>
 
 int32_t signed_extend30(uint32_t ins){
+    int32_t mod = get_bits(ins, 23, 0);
     if (get_bit(ins,23)){
-        set_bits(ins,29,24,1);
+        return 0b111111 | mod;
     } else {
-        set_bits(ins,29,24,0);
+        return mod;
     }
-    return ins;
 }
 
 int arm_branch(arm_core p, uint32_t ins) {
-    // BLX (1)
-    if(get_bits(ins, 31, 28) == 0xF){
-        arm_write_register(p, 14, arm_read_register(p, 15) + 4);
-        arm_write_cpsr(p, arm_read_cpsr(p) | (1 << 5));
-        arm_write_register(p, 15, (arm_read_register(p, 15)) + signed_extend30(ins) << 2 + (get_bit(ins, 24) << 1));
-    }
+    if(get_bits(ins, 31, 28) != 0xF){
     // B, BL
-    else {
-        // BL
         if(get_bit(ins, 24)){
             arm_write_register(p, 14, arm_read_register(p, 15) + 8);
         }
-        arm_write_register(p, 15, arm_read_register(p, 15) + signed_extend30(ins) << 2);
+        arm_write_register(p, 15, arm_read_register(p, 15) + (signed_extend30(ins) << 2));
+        return 0;
     }
-    return 0;
+    return -1;
 }
 
 int arm_coprocessor_others_swi(arm_core p, uint32_t ins) {
@@ -64,17 +58,5 @@ int arm_coprocessor_others_swi(arm_core p, uint32_t ins) {
 }
 
 int arm_miscellaneous(arm_core p, uint32_t ins) {
-    if(get_bits(ins, 24, 20) != 16){
-        return -1;
-    }
-    // BX
-    if(get_bits(ins, 7, 4) == 1){
-        arm_write_cpsr(p, arm_read_cpsr(p) | (get_bit9(ins, 0) << 5));
-        arm_write_register(p, 15, 0xFFFFFFFE & get_bits(ins, 3, 0));
-    } else if(get_bits(ins, 7, 4) == 2){
-        // BXJ
-    } else {
-        return -1;
-    }
-    return 0;
+    return UNDEFINED_INSTRUCTION;
 }
