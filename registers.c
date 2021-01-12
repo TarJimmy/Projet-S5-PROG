@@ -24,14 +24,19 @@ Contact: Guillaume.Huard@imag.fr
 #include "arm_constants.h"
 #include <stdlib.h>
 #include <string.h>
+#include "util.h"
+
 struct registers_data {
-    uint32_t regs[15];
-    uint32_t cpsr;
-    uint32_t spsr;
+    uint32_t regs[37];
 };
+
+int is_correct_registers(uint8_t reg) {
+    return reg <= 15 && reg >= 0; 
+}
 
 registers registers_create() {
     registers r = malloc(sizeof(struct registers_data));
+    r->regs[4] = 5;
     return r;
 }
 
@@ -42,66 +47,177 @@ void registers_destroy(registers r) {
 uint8_t get_mode(registers r) {
     //5 premiers bits du CPSR
     //0b11111
-    uint64_t mode = (uint8_t)(r->cpsr & 0x0000001f);
-    return mode;
+    int32_t cpsr = read_cpsr(r);
+	return get_bits(cpsr, 4, 0);
 } 
 
 int current_mode_has_spsr(registers r) {
     uint8_t mode = get_mode(r);
-    if (strcmp(arm_get_mode_name(mode),"IRQ") || strcmp(arm_get_mode_name(mode), "FIQ")){
-        return 1;
-    } else {
-        return 0;
-    }
+    return mode == FIQ || mode == IRQ || mode == SVC || mode == ABT || mode == UND;
 }
 
 int in_a_privileged_mode(registers r) {
     uint8_t mode = get_mode(r);
-    return !strcmp(arm_get_mode_name(mode), "USR");
+    return mode == FIQ || mode == IRQ || mode == SVC || mode == ABT || mode == UND || mode == SYS;
 }
 
 uint32_t read_register(registers r, uint8_t reg) {
-    uint32_t value = r->regs[reg];
-    return value;
+    if (!is_correct_registers(reg)) return 0;
+    return read_register_with_mode(r, reg);
 }
 
 uint32_t read_usr_register(registers r, uint8_t reg) {
-    uint32_t value=0;
-    if (!in_a_privileged_mode(r)) {
-        value = read_register(r, reg);
+    //read_register_with_mode simplifié pour usr
+    if (!is_correct_registers(reg)) return 0;
+    if (reg <= R12) {
+        return r->regs[reg];
+    } else {
+        switch (reg) {
+            case R13_USR_SYS:
+                return r->regs[R13_USR_SYS];
+                break;
+            case R14_USR_SYS:
+                return r->regs[R14_USR_SYS];
+                break;
+            case PC:
+                return r->regs[PC];
+                break;
+            default:
+                return 0;
+                break;
+        }
     }
-    return value;
 }
 
 uint32_t read_cpsr(registers r) {
-    uint32_t value = r->cpsr;
-    return value;
+    return r->regs[CPSR];
 }
 
 uint32_t read_spsr(registers r) {
     uint32_t value = 0;
     if (current_mode_has_spsr(r)) {
-        value = r->spsr;
+        read_register_with_mode(r, SPSR);
     }
     return value;
 }
 
 void write_register(registers r, uint8_t reg, uint32_t value) {
-    r->regs[reg] = value;
+    if (is_correct_registers(reg)) {
+        write_register_with_mode(r, reg, value);
+    }
 }
 
 void write_usr_register(registers r, uint8_t reg, uint32_t value) {
-    if (!in_a_privileged_mode(r)) {
+    if (is_correct_registers(reg)) {
         write_register(r, reg, value);
     }
 }
 
 void write_cpsr(registers r, uint32_t value) {
-    r->cpsr = value;
+    r->regs[CPSR] = value;
 }
 
 void write_spsr(registers r, uint32_t value) {
     if (current_mode_has_spsr(r)) {
-        r->spsr = value;
+        write_register_with_mode(r, SPSR, value);
     }
+}
+
+/**
+ * is_read: read, value ignored
+ * !is_read: write, value used
+ * Concerne tout les registres concerné par le mode (all hors CPSR)
+ */
+uint32_t action_register_mode(registers r, uint8_t reg, uint32_t value, uint8_t is_read) {
+    if (reg <= 7) { //Registres généraux
+        if (is_read) {
+            return r->regs[reg];
+        } else {
+            r->regs[reg] = value;
+            return 1;
+        }
+    } else if (reg <= 12) { //Registres généraux
+        if(get_mode(r) == FIQ) {
+			if (is_read) {
+                return r->regs[reg % 8 + R8_FIQ];
+            } else {
+                r->regs[reg % 8 + R8_FIQ] = value;
+            }
+		} else {
+            if (is_read) {
+			    return r->regs[reg];
+            } else {
+                r->regs[reg] = value;
+            }
+		}
+    } else if (reg == R13 || reg == R14 || reg == SPSR) { //SP, LR, SPSR
+        //i = 0: R13, i = 1: R14, i = 2: SPSR
+        //Pas la plus optimisé mais factorise le code
+        uint8_t i = reg == 13 ? 0 : 
+                                reg == 17 ? 1 : 2;
+        switch(get_mode(r)) {
+			case USR:
+			case SYS: 
+                if (reg != 17) {
+                    if (is_read) {
+                        return r->regs[R13_USR_SYS + i];   
+                        break;
+                    } else {
+                        r->regs[R13_USR_SYS + i] = value;
+                    }
+                } else {
+                    return 0;
+                }
+			case FIQ: 
+                if (is_read) {
+                    return r->regs[R13_FIQ + i];       
+                } else {
+                    r->regs[R13_FIQ + i] = value;
+                }
+                break;
+			case IRQ: 
+                if (is_read) {
+                    return r->regs[R13_IRQ + i];       
+                } else {
+                    r->regs[R13_IRQ + i] = value;
+                }
+                break;
+			case SVC: 
+                if (is_read) {
+                    return r->regs[R13_SVC + i];       
+                } else {
+                    r->regs[R13_SVC + i] = value;
+                }
+            break;
+			case ABT: 
+                if (is_read) {
+                    return r->regs[R13_ABT + i];       
+                } else {
+                    r->regs[R13_ABT + i] = value;
+                }
+                break;
+			case UND: 
+                if (is_read) {
+                    return r->regs[R13_UND + i];       
+                } else {
+                    r->regs[R13_UND + i] = value;
+                }
+            break;
+			default:
+				return -1;
+                break;
+		}
+    } else if (reg == PC) {
+        return r->regs[PC];
+    }
+    //renvoie 1 du write
+    return 1;
+}
+
+void write_register_with_mode(registers r, uint8_t reg, uint32_t value) {
+    action_register_mode(r, reg, value, 1); 
+}
+
+uint32_t read_register_with_mode(registers r, uint8_t reg) {
+    return action_register_mode(r, reg, 0, 0);
 }

@@ -8,3 +8,11 @@ config.log
 autom4te.cache/
 build-aux/
 Examples/
+
+arm_simulator
+config.h
+config.status
+memory_test
+registersd
+send_irq
+stamp-h1

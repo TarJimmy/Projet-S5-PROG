@@ -63,9 +63,48 @@ Contact: Guillaume.Huard@imag.fr
 #define StateMask   0x00000020
 
 /* REGISTERS */
-#define SP 13
-#define LR 14
-#define PC 15
+#define R0          0
+#define R1          1
+#define R2          2
+#define R3          3
+#define R4          4
+#define R5          5
+#define R6          6
+#define R7          7
+#define R8          8
+#define R9          9
+#define R10         10
+#define R11         11
+#define R12         12
+#define R13 		13
+#define R14			14
+#define PC          15
+#define CPSR        16
+#define SPSR		17
+
+/* Registers specific */
+#define R13_USR_SYS 13
+#define R14_USR_SYS 14
+#define R13_SVC     17
+#define R14_SVC     18
+#define SPSR_SVC    19
+#define R13_ABT     20
+#define R14_ABT     21
+#define SPSR_ABT    22
+#define R13_UND     23
+#define R14_UND     24
+#define SPSR_UND    25
+#define R13_IRQ     26
+#define R14_IRQ     27
+#define SPSR_IRQ    28
+#define R8_FIQ      29
+#define R9_FIQ      30
+#define R10_FIQ     31
+#define R11_FIQ     32
+#define R12_FIQ     33
+#define R13_FIQ     34
+#define R14_FIQ     35
+#define SPSR_FIQ    36
 
 char *arm_get_exception_name(unsigned char exception);
 char *arm_get_mode_name(uint8_t mode);

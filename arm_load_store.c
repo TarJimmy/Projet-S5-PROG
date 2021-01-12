@@ -44,7 +44,6 @@ int condition(uint8_t cpsr, uint8_t cond){
     return 1;
 }
 int arm_load_store(arm_core p, uint32_t ins) {
-    printf("ici cest arm_load_store\n");
     uint8_t I_bit = get_bit(ins, 25);
     uint8_t P_bit = get_bit(ins, 24);
     uint8_t U_bit = get_bit(ins, 23);
@@ -341,7 +340,6 @@ int word_byte_load_store(arm_core p, uint8_t I_bit, uint8_t P_bit, uint8_t U_bit
             //Load instruction
             if (B_bit == 0) {
                 //ldr
-                printf("ici cest ldr");
                 debug("LDR rd: r%d, addr: %x\n", rd, address);
                 uint32_t value;
                 error = arm_read_word(p, address, &value);
@@ -386,7 +384,7 @@ int word_byte_load_store(arm_core p, uint8_t I_bit, uint8_t P_bit, uint8_t U_bit
                 uint32_t value;
                 error = arm_read_word(p, address, &value);
                 if (error == NO_EXCEPTION) {
-                    arm_write_register(p, rn, value);
+                    arm_write_register(p, rd, value);
                 }
             } else {
                 //ldrb
@@ -394,7 +392,7 @@ int word_byte_load_store(arm_core p, uint8_t I_bit, uint8_t P_bit, uint8_t U_bit
                 uint8_t value;
                 error = arm_read_byte(p, address, &value);
                 if (error == NO_EXCEPTION) {
-                    arm_write_register(p, rn, (uint32_t)value);
+                    arm_write_register(p, rd, (uint32_t)value);
                 }
             }
         }
@@ -461,7 +459,7 @@ int load_store_half_double_byte (arm_core p, uint8_t rd, uint32_t address, uint8
         case 0b010: //ldrd: Load doubleword
             debug("LDRD rd: r%d, addr: %x\n", rd, address);
             if (condition(arm_read_cpsr(p), cond)) {
-                if (rd != LR && rd % 2 == 0 && get_bits(address, 1, 0) != 0b00) {
+                if (rd != R14 && rd % 2 == 0 && get_bits(address, 1, 0) != 0b00) {
                     //read first word
                     uint32_t value32;
                     error = arm_read_word(p, address, &value32);
@@ -482,7 +480,7 @@ int load_store_half_double_byte (arm_core p, uint8_t rd, uint32_t address, uint8
             break;
         case 0b011: //strd: Store doubleword
             debug("STRD rd: r%d, addr: %x\n", rd, address);
-            if (rd % 2 == 0 && rd != LR && get_bits(address, 1, 0) != 0b00 && get_bit(address, 2) == 0) {
+            if (rd % 2 == 0 && rd != R14 && get_bits(address, 1, 0) != 0b00 && get_bit(address, 2) == 0) {
                 uint32_t value32 = arm_read_register(p, rd);
                 error = arm_write_word(p, address, value32);
                 if (error == NO_EXCEPTION) {

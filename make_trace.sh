@@ -11,7 +11,7 @@ mkdir Examples/trace
 for file in Examples/*.s
 do
   base=`expr "$file" : 'Examples/\(.*\)\.s'`
-  ./arm_simulator --gdb-port 58000 --trace-registers --trace-memory \
+  ./arm_simulator --gdb-port 58015 --trace-registers --trace-memory \
                   >Examples/trace/trace_$base &
   gdb-multiarch -ex "file Examples/$base" -x gdb_commands --batch
 done
