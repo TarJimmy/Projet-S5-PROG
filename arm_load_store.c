@@ -41,7 +41,28 @@ int number_set_bits_in(uint16_t n) {
 
 
 int condition(uint8_t cpsr, uint8_t cond){
-    return 1;
+    int V_flag = (val_cpsr >> V) & 1;
+    int C_flag = (val_cpsr >> C) & 1;
+    int Z_flag = (val_cpsr >> Z) & 1;
+    int N_flag = (val_cpsr >> N) & 1;
+    switch (instruction >> 28) {
+        case 0:  return Z_flag;                         break;   // EQ       
+        case 1:  return !Z_flag;                        break;   // NE    
+        case 2:  return C_flag;                         break;   // CS/HS
+        case 3:  return !C_flag;                        break;   // CC/LO
+        case 4:  return N_flag;                         break;   // MI
+        case 5:  return !N_flag;                        break;   // PL
+        case 6:  return V_flag;                         break;   // VS
+        case 7:  return !V_flag;                        break;   // VC
+        case 8:  return C_flag || Z_flag;               break;   // HI
+        case 9:  return !C_flag || Z_flag;              break;   // LS
+        case 10: return N_flag == V_flag;               break;   // GE
+        case 11: return N_flag != V_flag;               break;   // LT
+        case 12: return !Z_flag && (N_flag == V_flag)   break;   // GT
+        case 13: return Z_flag || (N_flag != V_flag);   break;   // LE
+        case 14: return 1;                              break;   // AL
+        default: break;
+    }
 }
 int arm_load_store(arm_core p, uint32_t ins) {
     printf("ici cest arm_load_store\n");
@@ -126,34 +147,24 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
     uint32_t value; // Pour LDM
     // LDM Page A4-36 Doc
     if(L_bit) {
-        // LDM (2)
         debug("LDM :");
-        if (S_bit && get_bit(register_list, 15) == 0 && W_bit == 0) {
-            //MemoryAccess(B-bit, E-bit)
-            if (condition(cpsr, cond)) {
-                address = start_address;
-                for (int i = 0; i <= 14; i++) {
-                    if (get_bit(register_list, i) == 1) {
-                        arm_read_word(p, address, &value);
+        if (condition(cpsr, cond)) {
+            address = start_address;
+            for (int i = 0; i <= 14; i++) {
+                if (get_bit(register_list, i) == 1) {
+                    arm_read_word(p, address, &value);
+                    if (S_bit && get_bit(register_list, 15) == 0 && W_bit == 0) {
+                        // LDM (2)
                         arm_write_usr_register(p, i, value);
-                        address = address + 4;
-                    }
-                }
-                assert(end_address == (address - 4));
-            }
-        // LDM (3)
-        } else if (S_bit && get_bit(register_list, 15) == 1){
-            //MemoryAccess(B-bit, E-bit)
-            
-            if (condition(cpsr, cond)) {
-                address = start_address;
-                for (int i = 0; i <= 14; i++) {
-                    if (get_bit(register_list, i) == 1) {
-                        arm_read_word(p, address, &value);
+                    } else {
+                        // LDM (1) et (3)
                         arm_write_register(p, i, value);
-                        address = address + 4;
                     }
+                    address = address + 4;
                 }
+            }
+            // LDM (3)
+            if (S_bit && get_bit(register_list, 15) == 1) {
                 if (arm_current_mode_has_spsr(p)) {
                     cpsr = arm_read_spsr(p);
                 } else {
@@ -162,62 +173,37 @@ int arm_load_store_multiple(arm_core p, uint32_t ins) {
                 arm_read_word(p, address, &value);
                 arm_write_register(p, 15, value); // PC = value
                 address = address + 4;
-                assert(end_address == (address - 4));
+            // LDM (1) et (2)
+            } else if (get_bit(register_list, 15) == 1) {
+                value = arm_read_word(p, address, &value);
+                arm_write_register(p, 15, value & 0xFFFFFFFE);
+                //T Bit = value[0]; 
+                address = address + 4;
             }
 
-        // LDM (1)
-        } else {
-            //MemoryAccess(B-bit, E-bit)
-            if (condition(cpsr, cond)) {
-                address = start_address;
-                for (int i = 0; i <= 14; i++) {
-                    if (get_bit(register_list, i) == 1) {
-                        arm_read_word(p, address, &value);
-                        arm_write_register(p, i, value);
-                        address = address + 4;
-                    }
-                }
-                if (get_bit(register_list, 15) == 1) {
-                    value = arm_read_word(p, address, &value);
-                    arm_write_register(p, 15, value & 0xFFFFFFFE);
-                    //T Bit = value[0]; 
-                    address = address + 4;
-                }
-                assert(end_address == (address - 4));
-		    }
-
+            assert(end_address == (address - 4));
         }
+
+        
     // STM Page A4-189 Doc
     } else {
         debug("STM :");
-        // STM (1)
-        if (!S_bit && !L_bit) {
-            // MemoryAccess(B-bit, E-bit)
-            if (condition(cpsr, cond)) {
-                address = start_address;
-                for (int i = 0; i <= 15; i++) {
+        if (condition(cpsr, cond)) {
+            address = start_address;
+            for (int i = 0; i <= 15; i++) {
                     if (get_bit(register_list, i) == 1) {
+                        if (!S_bit && !L_bit) {
+                        // STM (1)
                         value = arm_read_register(p, i);
-                        arm_write_word(p, address, value);
-                        address = address + 4;
-                    }
-                }
-                assert(end_address == (address - 4));
-		    }
-        // STM (2)
-        } else {
-            //MemoryAccess(B-bit, E-bit)
-            if (condition(cpsr, cond)) {
-                address = start_address;
-                for (int i = 0; i <= 15; i++) {
-                     if (get_bit(register_list, i) == 1) {
+                        } else {
+                        // STM (2)
                         value = arm_read_usr_register(p, i);
-                        arm_write_word(p, address, value);
-                        address = address + 4;
-                    }
+                        }
+                    arm_write_word(p, address, value);
+                    address = address + 4;
                 }
-                assert(end_address == (address - 4));
             }
+            assert(end_address == (address - 4));
         }
     }
     return UNDEFINED_INSTRUCTION;
