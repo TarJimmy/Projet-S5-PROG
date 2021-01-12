@@ -33,7 +33,7 @@ struct memory_data {
 memory memory_create(size_t size, int is_big_endian) {
     memory mem= malloc(sizeof(struct memory_data)) ;
     if (mem != NULL) {
-        mem->adresses = malloc(sizeof(uint8_t)*4*size);
+        mem->adresses = malloc(sizeof(uint8_t)*size);
         if (mem->adresses != NULL) {
             mem->size = size;
             mem->is_big_endian = is_big_endian;

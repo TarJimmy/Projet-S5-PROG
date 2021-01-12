@@ -2,6 +2,7 @@
 .text
 main:
     ldr r1, =donnee
+    ldr r2, =donnee
     swi 0x123456
 .data
 donnee:

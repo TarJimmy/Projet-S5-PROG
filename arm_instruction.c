@@ -31,61 +31,58 @@ Contact: Guillaume.Huard@imag.fr
 
 static int arm_execute_instruction(arm_core p) {
     uint32_t instruction;
-    uint8_t error = 0;
     //Verification fetch memory
     if (arm_fetch(p, &instruction)) {
         printf("Error: Fetch memory");
-        error = 1;
     } else {
         //Verification flags
-        error = condition(arm_read_cpsr(p), instruction >> 28);
-    }
-    //Distribution de l'instruction à la bonne fonction
-    if (!error) {
-        uint8_t typeop = get_bits(instruction, 27, 25);
-        switch (typeop) {
-            case 0:
-                if (get_bit(instruction, 4) == 0 || get_bit(instruction, 7) == 0) {
-                    // Data processing immediate shift or register shift
-                    arm_data_processing_shift(p, instruction);
-                } else if (get_bit(instruction, 7) == 1 && get_bit(instruction, 4) == 1) {
-                    //Extra load/stores
+        if(condition(arm_read_cpsr(p), instruction >> 28)) {
+            //Distribution de l'instruction à la bonne fonction
+            uint8_t typeop = get_bits(instruction, 27, 25);
+            switch (typeop) {
+                case 0:
+                    if (get_bit(instruction, 4) == 0 || get_bit(instruction, 7) == 0) {
+                        // Data processing immediate shift or register shift
+                        arm_data_processing_shift(p, instruction);
+                    } else if (get_bit(instruction, 7) == 1 && get_bit(instruction, 4) == 1) {
+                        //Extra load/stores
+                        arm_load_store(p, instruction);
+                    }  else {
+                        arm_miscellaneous(p, instruction);
+                    }
+                    break;
+                case 1:
+                    //MSR: Immediate operand
+                    arm_data_processing_immediate_msr(p, instruction);
+                break;
+                case 2: 
+                    //Load and Store: Immediate offset/index
                     arm_load_store(p, instruction);
-                }  else {
-                    arm_miscellaneous(p, instruction);
-                }
+                    break;
+                case 3 :
+                    //Load and Store: Register offset/index
+                    arm_load_store(p, instruction);
+                    // Media instructions and Architecturally undefined
+                    break;
+                default:
+                case 4:
+                    arm_load_store_multiple(p, instruction);
                 break;
-            case 1:
-                //MSR: Immediate operand
-                arm_data_processing_immediate_msr(p, instruction);
-            break;
-            case 2: 
-                //Load and Store: Immediate offset/index
-                arm_load_store(p, instruction);
+                case 5:
+                    //BLX (1)
+                    arm_branch(p, instruction);
                 break;
-            case 3 :
-                //Load and Store: Register offset/index
-                arm_load_store(p, instruction);
-                // Media instructions and Architecturally undefined
+                case 6:
+                    //Load and Store Coprocessor
+                    arm_coprocessor_load_store(p, instruction);
+                case 7:
+                    //Exception-generating instructions
+                    arm_coprocessor_others_swi(p, instruction);
                 break;
-            default:
-            case 4:
-                arm_load_store_multiple(p, instruction);
-            break;
-            case 5:
-                //BLX (1)
-                arm_branch(p, instruction);
-            break;
-            case 6:
-                //Load and Store Coprocessor
-                arm_coprocessor_load_store(p, instruction);
-            case 7:
-                //Exception-generating instructions
-                arm_coprocessor_others_swi(p, instruction);
-            break;
+            }
         }
     }
-    return error;
+    return 0;
 }
 
 int arm_step(arm_core p) {
