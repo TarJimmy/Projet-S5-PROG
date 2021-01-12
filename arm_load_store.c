@@ -26,7 +26,7 @@ Contact: Guillaume.Huard@imag.fr
 #include "util.h"
 #include "debug.h"
 #include <assert.h>
-
+#include "decode.h"
 int number_set_bits_in(uint16_t n) {
 	int count = 0;
 	int mask = 1;
@@ -40,30 +40,7 @@ int number_set_bits_in(uint16_t n) {
 }
 
 
-int condition(uint8_t cpsr, uint8_t cond){
-    int V_flag = (val_cpsr >> V) & 1;
-    int C_flag = (val_cpsr >> C) & 1;
-    int Z_flag = (val_cpsr >> Z) & 1;
-    int N_flag = (val_cpsr >> N) & 1;
-    switch (instruction >> 28) {
-        case 0:  return Z_flag;                         break;   // EQ       
-        case 1:  return !Z_flag;                        break;   // NE    
-        case 2:  return C_flag;                         break;   // CS/HS
-        case 3:  return !C_flag;                        break;   // CC/LO
-        case 4:  return N_flag;                         break;   // MI
-        case 5:  return !N_flag;                        break;   // PL
-        case 6:  return V_flag;                         break;   // VS
-        case 7:  return !V_flag;                        break;   // VC
-        case 8:  return C_flag || Z_flag;               break;   // HI
-        case 9:  return !C_flag || Z_flag;              break;   // LS
-        case 10: return N_flag == V_flag;               break;   // GE
-        case 11: return N_flag != V_flag;               break;   // LT
-        case 12: return !Z_flag && (N_flag == V_flag)   break;   // GT
-        case 13: return Z_flag || (N_flag != V_flag);   break;   // LE
-        case 14: return 1;                              break;   // AL
-        default: break;
-    }
-}
+
 int arm_load_store(arm_core p, uint32_t ins) {
     uint8_t I_bit = get_bit(ins, 25);
     uint8_t P_bit = get_bit(ins, 24);
@@ -87,7 +64,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 }
 
 int arm_load_store_multiple(arm_core p, uint32_t ins) {
-     uint8_t cond = get_bits(ins, 31, 28);
+    uint8_t cond = get_bits(ins, 31, 28);
 	uint8_t P_bit = get_bit(ins, 24);
 	uint8_t U_bit = get_bit(ins, 23);
 	uint8_t S_bit = get_bit(ins, 22);

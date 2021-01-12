@@ -4,4 +4,6 @@
 
 int shift(arm_core p, uint32_t instruction);
 
+int condition(uint32_t cpsr, uint8_t cond);
+
 #endif

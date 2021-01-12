@@ -27,6 +27,7 @@ Contact: Guillaume.Huard@imag.fr
 #include "arm_branch_other.h"
 #include "arm_constants.h"
 #include "util.h"
+#include "decode.h"
 
 static int arm_execute_instruction(arm_core p) {
     uint32_t instruction;
@@ -37,85 +38,7 @@ static int arm_execute_instruction(arm_core p) {
         error = 1;
     } else {
         //Verification flags
-        uint32_t val_cpsr = arm_read_cpsr(p);
-        int V_flag = (val_cpsr >> V) & 1;
-        int C_flag = (val_cpsr >> C) & 1;
-        int Z_flag = (val_cpsr >> Z) & 1;
-        int N_flag = (val_cpsr >> N) & 1;
-        switch (instruction >> 28) {
-        case 0b0000: //EQ
-            if (!Z_flag) {
-                error = 1;
-            } 
-            break;
-        case 0b0001: //NE
-            if (Z_flag) {
-                error = 1;
-            } 
-            break;
-        case 0b0010: //CS/HS
-            if (!C_flag) {
-                error = 1;
-            } 
-            break;
-        case 0b0011: //CC/LO
-            if (C_flag) {
-                error = 1;
-            } 
-            break;
-        case 0b0100: //MI
-            if (!N_flag) {
-                error = 1;
-            } 
-            break;
-        case 0b0101: //PL
-            if (N_flag) {
-                error = 1;
-            } 
-            break;
-        case 0b0110: //VS
-            if (!V_flag) {
-                error = 1;
-            } 
-            break;
-        case 0b0111: //VC
-            if (V_flag) {
-                error = 1;
-            } 
-            break;
-        case 0b1000: //HI
-            if (!C_flag || Z_flag) {
-                error = 1;
-            } 
-            break;
-        case 0b1001: //LS
-            if (!(!C_flag || Z_flag)) {
-                error = 1;
-            }
-            break;
-        case 0b1010: //GE
-            if (N_flag != V_flag) {
-                error = 1;
-            }
-            break;
-        case 0b1011: //LT
-            if (N_flag == V_flag) {
-                error = 1;
-            }
-            break;
-        case 0b1100: //GT
-            if (Z_flag || N_flag != V_flag) {
-                error = 1;
-            }
-            break;
-        case 0b1101: //LE
-            if (!(Z_flag || N_flag != V_flag)) {
-                error = 1;
-            }
-            break;      
-        default:
-            break;
-        }
+        error = condition(arm_read_cpsr(p), instruction >> 28);
     }
     //Distribution de l'instruction à la bonne fonction
     if (!error) {
