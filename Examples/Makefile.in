@@ -88,7 +88,11 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 @HAVE_ARM_COMPILER_TRUE@noinst_PROGRAMS = example1$(EXEEXT) \
 @HAVE_ARM_COMPILER_TRUE@	example2$(EXEEXT) example3$(EXEEXT) \
-@HAVE_ARM_COMPILER_TRUE@	example4$(EXEEXT) exampleLdr$(EXEEXT) \
+@HAVE_ARM_COMPILER_TRUE@	example4$(EXEEXT) testLDR_STR$(EXEEXT) \
+@HAVE_ARM_COMPILER_TRUE@	testLDRB_STRB$(EXEEXT) \
+@HAVE_ARM_COMPILER_TRUE@	testLDRH_STRH$(EXEEXT) \
+@HAVE_ARM_COMPILER_TRUE@	testLDR_SH_SB$(EXEEXT) \
+@HAVE_ARM_COMPILER_TRUE@	testLDM_STM$(EXEEXT) \
 @HAVE_ARM_COMPILER_TRUE@	insertion_sort$(EXEEXT)
 subdir = Examples
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -113,12 +117,24 @@ example3_LDADD = $(LDADD)
 am_example4_OBJECTS = example4.$(OBJEXT)
 example4_OBJECTS = $(am_example4_OBJECTS)
 example4_LDADD = $(LDADD)
-am_exampleLdr_OBJECTS = exampleLdr.$(OBJEXT)
-exampleLdr_OBJECTS = $(am_exampleLdr_OBJECTS)
-exampleLdr_LDADD = $(LDADD)
 am_insertion_sort_OBJECTS = insertion_sort.$(OBJEXT)
 insertion_sort_OBJECTS = $(am_insertion_sort_OBJECTS)
 insertion_sort_LDADD = $(LDADD)
+am_testLDM_STM_OBJECTS = testLDM_STM.$(OBJEXT)
+testLDM_STM_OBJECTS = $(am_testLDM_STM_OBJECTS)
+testLDM_STM_LDADD = $(LDADD)
+am_testLDRB_STRB_OBJECTS = testLDRB_STRB.$(OBJEXT)
+testLDRB_STRB_OBJECTS = $(am_testLDRB_STRB_OBJECTS)
+testLDRB_STRB_LDADD = $(LDADD)
+am_testLDRH_STRH_OBJECTS = testLDRH_STRH.$(OBJEXT)
+testLDRH_STRH_OBJECTS = $(am_testLDRH_STRH_OBJECTS)
+testLDRH_STRH_LDADD = $(LDADD)
+am_testLDR_SH_SB_OBJECTS = testLDR_SH_SB.$(OBJEXT)
+testLDR_SH_SB_OBJECTS = $(am_testLDR_SH_SB_OBJECTS)
+testLDR_SH_SB_LDADD = $(LDADD)
+am_testLDR_STR_OBJECTS = testLDR_STR.$(OBJEXT)
+testLDR_STR_OBJECTS = $(am_testLDR_STR_OBJECTS)
+testLDR_STR_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -154,11 +170,15 @@ am__v_CCAS_ = $(am__v_CCAS_@AM_DEFAULT_V@)
 am__v_CCAS_0 = @echo "  CCAS    " $@;
 am__v_CCAS_1 = 
 SOURCES = $(example1_SOURCES) $(example2_SOURCES) $(example3_SOURCES) \
-	$(example4_SOURCES) $(exampleLdr_SOURCES) \
-	$(insertion_sort_SOURCES)
+	$(example4_SOURCES) $(insertion_sort_SOURCES) \
+	$(testLDM_STM_SOURCES) $(testLDRB_STRB_SOURCES) \
+	$(testLDRH_STRH_SOURCES) $(testLDR_SH_SB_SOURCES) \
+	$(testLDR_STR_SOURCES)
 DIST_SOURCES = $(example1_SOURCES) $(example2_SOURCES) \
-	$(example3_SOURCES) $(example4_SOURCES) $(exampleLdr_SOURCES) \
-	$(insertion_sort_SOURCES)
+	$(example3_SOURCES) $(example4_SOURCES) \
+	$(insertion_sort_SOURCES) $(testLDM_STM_SOURCES) \
+	$(testLDRB_STRB_SOURCES) $(testLDRH_STRH_SOURCES) \
+	$(testLDR_SH_SB_SOURCES) $(testLDR_STR_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -289,7 +309,11 @@ example1_SOURCES = example1.s
 example2_SOURCES = example2.s
 example3_SOURCES = example3.s
 example4_SOURCES = example4.s
-exampleLdr_SOURCES = exampleLdr.s
+testLDR_STR_SOURCES = testLDR_STR.s
+testLDRB_STRB_SOURCES = testLDRB_STRB.s
+testLDRH_STRH_SOURCES = testLDRH_STRH.s
+testLDR_SH_SB_SOURCES = testLDR_SH_SB.s
+testLDM_STM_SOURCES = testLDM_STM.s
 insertion_sort_SOURCES = insertion_sort.c
 EXTRA_DIST = linker_script
 all: all-am
@@ -345,13 +369,29 @@ example4$(EXEEXT): $(example4_OBJECTS) $(example4_DEPENDENCIES) $(EXTRA_example4
 	@rm -f example4$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(example4_OBJECTS) $(example4_LDADD) $(LIBS)
 
-exampleLdr$(EXEEXT): $(exampleLdr_OBJECTS) $(exampleLdr_DEPENDENCIES) $(EXTRA_exampleLdr_DEPENDENCIES) 
-	@rm -f exampleLdr$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(exampleLdr_OBJECTS) $(exampleLdr_LDADD) $(LIBS)
-
 insertion_sort$(EXEEXT): $(insertion_sort_OBJECTS) $(insertion_sort_DEPENDENCIES) $(EXTRA_insertion_sort_DEPENDENCIES) 
 	@rm -f insertion_sort$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(insertion_sort_OBJECTS) $(insertion_sort_LDADD) $(LIBS)
+
+testLDM_STM$(EXEEXT): $(testLDM_STM_OBJECTS) $(testLDM_STM_DEPENDENCIES) $(EXTRA_testLDM_STM_DEPENDENCIES) 
+	@rm -f testLDM_STM$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(testLDM_STM_OBJECTS) $(testLDM_STM_LDADD) $(LIBS)
+
+testLDRB_STRB$(EXEEXT): $(testLDRB_STRB_OBJECTS) $(testLDRB_STRB_DEPENDENCIES) $(EXTRA_testLDRB_STRB_DEPENDENCIES) 
+	@rm -f testLDRB_STRB$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(testLDRB_STRB_OBJECTS) $(testLDRB_STRB_LDADD) $(LIBS)
+
+testLDRH_STRH$(EXEEXT): $(testLDRH_STRH_OBJECTS) $(testLDRH_STRH_DEPENDENCIES) $(EXTRA_testLDRH_STRH_DEPENDENCIES) 
+	@rm -f testLDRH_STRH$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(testLDRH_STRH_OBJECTS) $(testLDRH_STRH_LDADD) $(LIBS)
+
+testLDR_SH_SB$(EXEEXT): $(testLDR_SH_SB_OBJECTS) $(testLDR_SH_SB_DEPENDENCIES) $(EXTRA_testLDR_SH_SB_DEPENDENCIES) 
+	@rm -f testLDR_SH_SB$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(testLDR_SH_SB_OBJECTS) $(testLDR_SH_SB_LDADD) $(LIBS)
+
+testLDR_STR$(EXEEXT): $(testLDR_STR_OBJECTS) $(testLDR_STR_DEPENDENCIES) $(EXTRA_testLDR_STR_DEPENDENCIES) 
+	@rm -f testLDR_STR$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(testLDR_STR_OBJECTS) $(testLDR_STR_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

@@ -39,16 +39,16 @@ int number_set_bits_in(uint16_t n) {
 	return count;
 }
 
-void decode_instruction(uint32_t ins, uint8_t* cond, uint8_t* I_bit, uint8_t* P_bit, uint8_t* U_bit, uint8_t* B_bit, uint8_t* W_bit, uint8_t* L_bit, uint8_t* rn, uint8_t* rd, uint16_t* data) {
+void decode_instruction(uint32_t ins, uint8_t* cond, uint8_t* bit_25, uint8_t* bit_24, uint8_t* bit_23, uint8_t* bit_22, uint8_t* bit_21, uint8_t* bit_20, uint8_t* rn, uint8_t* rd, uint16_t* data) {
     *cond = get_bits(ins, 31, 28);
-    if (I_bit != NULL) {
-        *I_bit = get_bit(ins, 25);
+    if (bit_25 != NULL) {
+        *bit_25 = get_bit(ins, 25);
     }
-    *P_bit = get_bit(ins, 24);
-    *U_bit = get_bit(ins, 23);
-    *B_bit = get_bit(ins, 22);
-    *W_bit = get_bit(ins, 21);
-    *L_bit = get_bit(ins, 20);
+    *bit_24 = get_bit(ins, 24);
+    *bit_23 = get_bit(ins, 23);
+    *bit_22 = get_bit(ins, 22);
+    *bit_21 = get_bit(ins, 21);
+    *bit_20 = get_bit(ins, 20);
     *rn = (uint8_t)get_bits(ins, 19, 16);
     if (rd != NULL) {
         *rd = (uint8_t)get_bits(ins, 15, 12);
@@ -347,9 +347,9 @@ int miscellaneous_load_store(arm_core p, uint32_t ins) {
     uint8_t H_bit = get_bit(ins, 5);
     uint8_t S_bit = get_bit(ins, 6);
 
-    uint8_t cond, I_bit, P_bit, U_bit, B_bit, W_bit, L_bit, rn, rd;
+    uint8_t cond, I_bit, P_bit, U_bit, W_bit, L_bit, rn, rd;
     uint16_t data;
-    decode_instruction(ins, &cond, &I_bit, &P_bit, &U_bit, &B_bit, &W_bit, &L_bit, &rn, &rd, &data);
+    decode_instruction(ins, &cond, NULL, &P_bit, &U_bit, &I_bit, &W_bit, &L_bit, &rn, &rd, &data);
 
     //Variable
     uint16_t offset;
@@ -394,15 +394,15 @@ int miscellaneous_load_store(arm_core p, uint32_t ins) {
 // LDRH, STRH, LDRSH, STRSH, LDRSB, STRSB, LDRD, STRD
 int load_store_half_double_byte (arm_core p, uint8_t rd, uint32_t address, uint8_t L_bit, uint8_t S_bit, uint8_t H_bit, uint8_t cond) {
     int error = NO_EXCEPTION;
-    switch (((L_bit << 3) + (S_bit << 2) + H_bit)) { 
-        case 0b001: //strh: Store halfword
+    switch (((L_bit << 2) + (S_bit << 1) + H_bit)) { 
+        case 1: //strh: Store halfword
             debug("STRH rd: r%d, addr: %x\n", rd, address);
             if (condition(arm_read_cpsr(p), cond)) {
                 uint16_t value16 = (get_bits(arm_read_register(p, rd), 15, 0));
                 error = arm_write_half(p, address, value16);
             }
             break;
-        case 0b010: //ldrd: Load doubleword
+        case 2: //ldrd: Load doubleword
             debug("LDRD rd: r%d, addr: %x\n", rd, address);
             if (condition(arm_read_cpsr(p), cond)) {
                 if (rd != R14 && rd % 2 == 0 && get_bits(address, 1, 0) != 0b00) {
@@ -424,7 +424,7 @@ int load_store_half_double_byte (arm_core p, uint8_t rd, uint32_t address, uint8
                 error = UNDEFINED_INSTRUCTION; 
             }
             break;
-        case 0b011: //strd: Store doubleword
+        case 3: //strd: Store doubleword
             debug("STRD rd: r%d, addr: %x\n", rd, address);
             if (rd % 2 == 0 && rd != R14 && get_bits(address, 1, 0) != 0b00 && get_bit(address, 2) == 0) {
                 uint32_t value32 = arm_read_register(p, rd);
@@ -437,7 +437,7 @@ int load_store_half_double_byte (arm_core p, uint8_t rd, uint32_t address, uint8
                 error = UNDEFINED_INSTRUCTION;
             }
             break;
-        case 0b101: //ldrh: Load unsigned halfword
+        case 5: //ldrh: Load unsigned halfword
             debug("LDRH rd: r%d, addr: %x\n", rd, address);
             //Pas sûr sûr
             uint16_t value16;
@@ -446,7 +446,7 @@ int load_store_half_double_byte (arm_core p, uint8_t rd, uint32_t address, uint8
                 arm_write_register(p, rd, (uint32_t)value16);
             }
             break;
-        case 0b110: //ldrsb: Load signed byte
+        case 6: //ldrsb: Load signed byte
             debug("LDRSB rd : r%d, addr: %x\n", rd, address);
             if (condition(arm_read_cpsr(p), cond)) {
                 //Pas sûr sûr
@@ -462,17 +462,19 @@ int load_store_half_double_byte (arm_core p, uint8_t rd, uint32_t address, uint8
                 }
             }
             break;
-        case 0b111: //ldrsh: Load signed halfword
+        case 7: //ldrsh: Load signed halfword
             debug("LDRSH rd : r%d, addr: %x\n", rd, address);
-            uint32_t value32;
-            error = arm_read_half(p, address, (uint16_t*)&value32);
-            if (error == NO_EXCEPTION) {
-                if (value32 & (1 << 15)) {
-                    value32 |= 0xFFFF0000; 
-                } else {
-                    value32 &= 0X0000FFFFF;
-                } 
-                arm_write_register(p, rd, value32);
+            if (condition(arm_read_cpsr(p), cond)) {
+                uint16_t value32;
+                error = arm_read_half(p, address, (uint16_t*)&value32);
+                if (error == NO_EXCEPTION) {
+                    if (value32 & (1 << 15)) {
+                        value32 |= 0xFFFF0000; 
+                    } else {
+                        value32 &= 0X0000FFFFF;
+                    } 
+                    arm_write_register(p, rd, value32);
+                }
             }
             break;
         default:
