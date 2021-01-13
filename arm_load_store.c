@@ -251,7 +251,7 @@ int word_byte_load_store(arm_core p, uint32_t instruction) {
         offset = arm_read_register(p, rm);
         if (get_bits(data, 11, 4) != 0) {
             //scaled register
-            offset = shift(p, instruction, NULL);
+            offset = shift(p, instruction,NULL);
         }
     } else {
         //immediate offset
