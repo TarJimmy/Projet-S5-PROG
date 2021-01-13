@@ -1,38 +1,33 @@
-ACLOCAL_AMFLAGS = -I m4
-
-AM_CFLAGS=-D DEBUG
-AM_CFLAGS+=-D WARNING
-AM_CFLAGS+=-D BIG_ENDIAN_SIMULATOR
-# Uncomment if performance when running with -DDEBUG is an issue
-# Warning, if uncommented, issuing calls to debug functions during options
-# parsing might result in debug flag incorrectly set to 0 for some files
-#AM_CFLAGS+=-D CACHE_DEBUG_FLAG
-
-LDADD=-lpthread
+CC=$(GCC_CROSS)
+CCAS=$(GCC_CROSS)
+AM_CFLAGS=-mbig-endian
+AM_CCASFLAGS=-mbig-endian
+AM_LDFLAGS=-nostdlib -T $(srcdir)/linker_script -n --entry main
+AM_LDFLAGS+=-Wl,-EB
 
 if HAVE_ARM_COMPILER
-SUBDIRS=. Examples
+noinst_PROGRAMS=example1 example2 example3 example4 testLDR_STR testLDRB_STRB testLDRH_STRH testLDR_SH_SB testLDM_STM test_Data_proc insertion_sort
+
+all-am: $(PROGS)
 endif
 
-bin_PROGRAMS=arm_simulator send_irq memory_test
+example1_SOURCES=example1.s
+example2_SOURCES=example2.s
+example3_SOURCES=example3.s
+example4_SOURCES=example4.s
 
-COMMON=csapp.h csapp.c scanner.h scanner.l debug.h debug.c \
-       gdb_protocol.h gdb_protocol.c util.h util.c decode.h decode.c trace.h trace.c \
-       memory.h memory.c trace_location.h no_trace_location.h \
-       registers.h registers.c \
-       arm.h arm.c \
-       arm_constants.h arm_constants.c \
-       arm_core.h arm_core.c \
-       arm_exception.h arm_exception.c \
-       arm_instruction.h arm_instruction.c \
-       arm_data_processing.h arm_data_processing.c \
-       arm_load_store.h arm_load_store.c \
-       arm_branch_other.h arm_branch_other.c
+testLDR_STR_SOURCES=testLDR_STR.s
+testLDRB_STRB_SOURCES=testLDRB_STRB.s
+testLDRH_STRH_SOURCES=testLDRH_STRH.s
+testLDR_SH_SB_SOURCES=testLDR_SH_SB.s
 
-arm_simulator_SOURCES=$(COMMON) arm_simulator.c
+testLDM_STM_SOURCES=testLDM_STM.s
 
-send_irq_SOURCES=send_irq.c csapp.h csapp.c arm_constants.h arm_constants.c
+test_Data_proc_SOURCES=test_Data_proc.s
 
-memory_test_SOURCES=memory_test.c memory.h memory.c util.h util.c
+insertion_sort_SOURCES=insertion_sort.c
 
-EXTRA_DIST=gdb_commands make_trace.sh License
+EXTRA_DIST=linker_script
+
+clean-local:
+	$(RM) $(PROGS)
