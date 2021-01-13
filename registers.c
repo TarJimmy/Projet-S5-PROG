@@ -1,80 +1,182 @@
 /*
-Armator - simulateur de jeu d'instruction ARMv5T à but pédagogique
+Armator - simulateur de jeu d'instruction ARMv5T ï¿½ but pï¿½dagogique
 Copyright (C) 2011 Guillaume Huard
 Ce programme est libre, vous pouvez le redistribuer et/ou le modifier selon les
-termes de la Licence Publique Générale GNU publiée par la Free Software
-Foundation (version 2 ou bien toute autre version ultérieure choisie par vous).
+termes de la Licence Publique Gï¿½nï¿½rale GNU publiï¿½e par la Free Software
+Foundation (version 2 ou bien toute autre version ultï¿½rieure choisie par vous).
 
-Ce programme est distribué car potentiellement utile, mais SANS AUCUNE
+Ce programme est distribuï¿½ car potentiellement utile, mais SANS AUCUNE
 GARANTIE, ni explicite ni implicite, y compris les garanties de
-commercialisation ou d'adaptation dans un but spécifique. Reportez-vous à la
-Licence Publique Générale GNU pour plus de détails.
+commercialisation ou d'adaptation dans un but spï¿½cifique. Reportez-vous ï¿½ la
+Licence Publique Gï¿½nï¿½rale GNU pour plus de dï¿½tails.
 
-Vous devez avoir reçu une copie de la Licence Publique Générale GNU en même
-temps que ce programme ; si ce n'est pas le cas, écrivez à la Free Software
+Vous devez avoir reï¿½u une copie de la Licence Publique Gï¿½nï¿½rale GNU en mï¿½me
+temps que ce programme ; si ce n'est pas le cas, ï¿½crivez ï¿½ la Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
-États-Unis.
+ï¿½tats-Unis.
 
 Contact: Guillaume.Huard@imag.fr
-	 Bâtiment IMAG
+	 Bï¿½timent IMAG
 	 700 avenue centrale, domaine universitaire
-	 38401 Saint Martin d'Hères
+	 38401 Saint Martin d'Hï¿½res
 */
 #include "registers.h"
 #include "arm_constants.h"
 #include <stdlib.h>
+#include <string.h>
 
+#include "util.h"
+#include <stdio.h>
+
+#define MODE_READ 1
+#define MODE_WRITE 0
 struct registers_data {
+    uint32_t regs[37];
 };
 
+int is_correct_registers(uint8_t reg) {
+    return reg <= 15 && reg >= 0; 
+}
+
 registers registers_create() {
-    registers r = NULL;
+    registers r = malloc(sizeof(struct registers_data));
     return r;
 }
 
 void registers_destroy(registers r) {
+    free(r);
 }
 
 uint8_t get_mode(registers r) {
-    return 0;
+    //5 premiers bits du CPSR
+    //0b11111
+    int32_t cpsr = read_cpsr(r);
+	return get_bits(cpsr, 4, 0);
 } 
 
 int current_mode_has_spsr(registers r) {
-    return 0;
+    uint8_t mode = get_mode(r);
+    return mode == FIQ || mode == IRQ || mode == SVC || mode == ABT || mode == UND;
 }
 
 int in_a_privileged_mode(registers r) {
-    return 0;
+    uint8_t mode = get_mode(r);
+    return mode == FIQ || mode == IRQ || mode == SVC || mode == ABT || mode == UND || mode == SYS;
 }
 
 uint32_t read_register(registers r, uint8_t reg) {
-    uint32_t value=0;
-    return value;
+    if (!is_correct_registers(reg)) return 0;
+    return read_register_with_mode(r, reg);
 }
 
 uint32_t read_usr_register(registers r, uint8_t reg) {
-    uint32_t value=0;
-    return value;
+    //read_register_with_mode simplifiÃ© pour usr
+    if (!is_correct_registers(reg)) return 0;
+    if (reg <= R12) {
+        return r->regs[reg];
+    } else {
+        switch (reg) {
+            case R13_USR_SYS:
+                return r->regs[R13_USR_SYS];
+                break;
+            case R14_USR_SYS:
+                return r->regs[R14_USR_SYS];
+                break;
+            case PC:
+                return r->regs[PC];
+                break;
+            default:
+                return 0;
+                break;
+        }
+    }
 }
 
 uint32_t read_cpsr(registers r) {
-    uint32_t value=0;
-    return value;
+    return r->regs[CPSR];
 }
 
 uint32_t read_spsr(registers r) {
-    uint32_t value=0;
+    uint32_t value = 0;
+    if (current_mode_has_spsr(r)) {
+        read_register_with_mode(r, SPSR);
+    }
     return value;
 }
 
 void write_register(registers r, uint8_t reg, uint32_t value) {
+    if (is_correct_registers(reg)) {
+        write_register_with_mode(r, reg, value);
+    }
 }
 
 void write_usr_register(registers r, uint8_t reg, uint32_t value) {
+    if (is_correct_registers(reg)) {
+        write_register(r, reg, value);
+    }
 }
 
 void write_cpsr(registers r, uint32_t value) {
+    r->regs[CPSR] = value;
 }
 
 void write_spsr(registers r, uint32_t value) {
+    if (current_mode_has_spsr(r)) {
+        write_register_with_mode(r, SPSR, value);
+    }
+}
+
+/**
+ * is_read: read, value ignored
+ * !is_read: write, value used
+ * Concerne tout les registres concernÃ© par le mode (all hors CPSR)
+ */
+uint32_t action_register_mode(registers r, uint8_t reg, uint32_t value, uint8_t is_read) {
+    if (reg <= 7 || (get_mode(r) != FIQ && reg <= 12)) { //Registres gÃ©nÃ©raux ou differents des privÃ©es de FIQ
+        return read_write_register_worker(r, reg, value, is_read);
+    } else if (reg <= 12 && get_mode(r) == FIQ) { //Registres gÃ©nÃ©raux > 7 de FIQ
+        return read_write_register_worker(r, (reg % 8 + R8_FIQ), value, is_read);
+    } else if (reg == R13 || reg == R14 || reg == SPSR) { //SP, LR, SPSR
+        //i = 0: R13, i = 1: R14, i = 2: SPSR
+        //Pas la plus optimisÃ© mais factorise le code
+        uint8_t i = reg == 13 ? 0 : 
+                    reg == 14 ? 1 : 2;
+        switch(get_mode(r)) {
+			case USR:
+			case SYS: read_write_register_worker(r, R13_SVC + i, value, is_read);
+                if (reg != 17) {
+                    return read_write_register_worker(r, R13_USR_SYS + i, value, is_read);
+                } else {
+                    return 0;
+                }
+			case FIQ: return read_write_register_worker(r, R13_FIQ + i, value, is_read);    break;
+			case IRQ: return read_write_register_worker(r, R13_IRQ + i, value, is_read);    break;
+			case SVC: return read_write_register_worker(r, R13_SVC + i, value, is_read);    break;
+			case ABT: return read_write_register_worker(r, R13_ABT + i, value, is_read);    break;
+			case UND: return read_write_register_worker(r, R13_UND + i, value, is_read);    break;
+			default:  return -1;                                                            break;
+		}
+    } else if (reg == PC) {
+        return read_write_register_worker(r, reg, value, is_read);
+    } else {
+        //N'est pas censÃ© ce passer
+        return 0;
+    }
+}
+
+void write_register_with_mode(registers r, uint8_t reg, uint32_t value) {
+    action_register_mode(r, reg, value, MODE_WRITE); 
+}
+
+uint32_t read_register_with_mode(registers r, uint8_t reg) {
+    return action_register_mode(r, reg, 0, MODE_READ);
+}
+
+uint32_t read_write_register_worker(registers r, uint8_t reg, uint32_t value, uint8_t is_read) {
+    if (is_read) {
+        return r->regs[reg];       
+    } else {
+        r->regs[reg] = value;
+    }
+    return 1;
 }

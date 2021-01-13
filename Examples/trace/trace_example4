@@ -1,0 +1,15 @@
+Cycle 0, Register write, CPSR, val: 000001D3
+Cycle 0, Register write, PC_USR, val: 00000000
+Cycle 1, Register read, PC, val: 00000024
+Cycle 1, Mem read (4 bytes, fetch) addr: 00000020, val: E8B400C0
+Cycle 1, Register write, PC, val: 00000024
+Cycle 1, Register read, CPSR, val: 00000024
+Cycle 1, Register read, CPSR, val: 00000024
+Cycle 1, Mem read (4 bytes) addr: 00000000, val: 00000000
+Cycle 1, Register write, R06, val: 00000000
+Cycle 1, Mem read (4 bytes) addr: 00000004, val: 00000000
+Cycle 1, Register write, R07, val: 00000000
+Cycle 2, Register read, PC, val: 00000028
+Cycle 2, Mem read (4 bytes, fetch) addr: 00000024, val: EF123456
+Cycle 2, Register write, PC, val: 00000028
+Cycle 2, Register read, CPSR, val: 00000028
