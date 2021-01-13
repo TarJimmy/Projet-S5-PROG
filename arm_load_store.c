@@ -39,7 +39,6 @@ int number_set_bits_in(uint16_t n) {
 	return count;
 }
 
-
 void decode_instruction(uint32_t ins, uint8_t* cond, uint8_t* I_bit, uint8_t* P_bit, uint8_t* U_bit, uint8_t* B_bit, uint8_t* W_bit, uint8_t* L_bit, uint8_t* rn, uint8_t* rd, uint16_t* data) {
     *cond = get_bits(ins, 31, 28);
     if (I_bit != NULL) {
@@ -73,7 +72,7 @@ int arm_load_store(arm_core p, uint32_t ins) {
 
 int arm_load_store_multiple(arm_core p, uint32_t ins) {
     uint8_t cond, P_bit, U_bit, S_bit, W_bit, L_bit, Rn;
-	uint16_t register_list;
+	  uint16_t register_list;
 
     decode_instruction(ins, &cond, NULL, &P_bit, &U_bit, &S_bit, &W_bit, &L_bit, &Rn, NULL, &register_list);
 
@@ -351,6 +350,7 @@ int miscellaneous_load_store(arm_core p, uint32_t ins) {
     uint8_t cond, I_bit, P_bit, U_bit, B_bit, W_bit, L_bit, rn, rd;
     uint16_t data;
     decode_instruction(ins, &cond, &I_bit, &P_bit, &U_bit, &B_bit, &W_bit, &L_bit, &rn, &rd, &data);
+
     //Variable
     uint16_t offset;
     uint32_t address;

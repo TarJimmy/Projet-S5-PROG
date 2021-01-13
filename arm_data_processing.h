@@ -25,7 +25,11 @@ Contact: Guillaume.Huard@imag.fr
 #include <stdint.h>
 #include "arm_core.h"
 
-int arm_data_processing_shift(arm_core p, uint32_t ins);
-int arm_data_processing_immediate_msr(arm_core p, uint32_t ins);
+uint32_t calcul (arm_core p, uint32_t ins, uint32_t value, uint32_t* alu_out);
+int CarryFrom(uint32_t a, uint32_t b);
+int BorrowFrom(uint32_t a, uint32_t b);
+int OverflowFrom(uint32_t a, uint32_t b, char op);
+void maj_flags(arm_core p, uint32_t ins, uint32_t alu_out, uint32_t shifter_carry_out);
+int arm_data_processing(arm_core p, uint32_t ins);
 
 #endif
