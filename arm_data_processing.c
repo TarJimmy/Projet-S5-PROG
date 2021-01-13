@@ -154,7 +154,7 @@ void maj_flags(arm_core p, uint32_t ins, uint32_t alu_out, uint32_t shifter_carr
     int N_flag = (val_cpsr >> N) & 1;
 	uint32_t S = get_bit(ins,20);
 	uint32_t Rd = get_bits(ins, 15, 12);
-	switch (ins>>20){
+	switch (get_bits(ins, 24, 21)){
 		case 0b1000: //TST
 		case 0b1001: //TEQ
 			N_flag = get_bit(alu_out,31);
@@ -179,14 +179,12 @@ void maj_flags(arm_core p, uint32_t ins, uint32_t alu_out, uint32_t shifter_carr
 		default: //autres opérations
 			if (S && Rd==15){
 				if ( arm_current_mode_has_spsr(p) ){ arm_write_cpsr(p,arm_read_spsr(p)); }
-				//else { UNPREDICTABLE }
 			} else if (S) {
 				N_flag = get_bit(arm_read_register(p,Rd),31);
 				if (Rd==0) { Z_flag = 1; }
 				else { Z_flag = 0; }
-				switch (ins>>20)
+				switch (get_bits(ins, 24, 21))
 				{
-				//pas de doc sur les maj de C et V lorsqu'il y a C_flag en operande
 					case 0b0000: //AND
 					case 0b0001: //EOR
 					case 0b1100: //ORR
@@ -284,7 +282,7 @@ int arm_data_processing(arm_core p, uint32_t ins) {
 				shifter_carry_out = get_bit(shifter_operand,31);
 			}
 		} //p446
-		else { value = calcul(p, ins, shift(p,ins,&shifter_carry_out), &alu_out); }
+		else { value = calcul(p, ins, shift(p,ins,&shifter_carry_out), &alu_out);}
 		if (Rd!=0) { arm_write_register(p, Rd, value); }
 		maj_flags(p, ins, alu_out, shifter_carry_out);
 		return 0; //tout c'est bien passe

@@ -28,13 +28,12 @@ Contact: Guillaume.Huard@imag.fr
 #include "arm_constants.h"
 #include "util.h"
 #include "decode.h"
-#include "debug.h"
 
 static int arm_execute_instruction(arm_core p) {
     uint32_t instruction;
     //Verification fetch memory
     if (arm_fetch(p, &instruction)) {
-        printf("Error: Fetch memory\n");
+        printf("Error: Fetch memory");
     } else {
         //Verification flags
         if(condition(arm_read_cpsr(p), instruction >> 28)) {
