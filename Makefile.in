@@ -104,9 +104,9 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__objects_1 = csapp.$(OBJEXT) scanner.$(OBJEXT) debug.$(OBJEXT) \
-	gdb_protocol.$(OBJEXT) util.$(OBJEXT) trace.$(OBJEXT) \
-	memory.$(OBJEXT) registers.$(OBJEXT) arm.$(OBJEXT) \
-	arm_constants.$(OBJEXT) arm_core.$(OBJEXT) \
+	gdb_protocol.$(OBJEXT) util.$(OBJEXT) decode.$(OBJEXT) \
+	trace.$(OBJEXT) memory.$(OBJEXT) registers.$(OBJEXT) \
+	arm.$(OBJEXT) arm_constants.$(OBJEXT) arm_core.$(OBJEXT) \
 	arm_exception.$(OBJEXT) arm_instruction.$(OBJEXT) \
 	arm_data_processing.$(OBJEXT) arm_load_store.$(OBJEXT) \
 	arm_branch_other.$(OBJEXT)
@@ -145,10 +145,11 @@ am__depfiles_remade = ./$(DEPDIR)/arm.Po \
 	./$(DEPDIR)/arm_exception.Po ./$(DEPDIR)/arm_instruction.Po \
 	./$(DEPDIR)/arm_load_store.Po ./$(DEPDIR)/arm_simulator.Po \
 	./$(DEPDIR)/csapp.Po ./$(DEPDIR)/debug.Po \
-	./$(DEPDIR)/gdb_protocol.Po ./$(DEPDIR)/memory.Po \
-	./$(DEPDIR)/memory_test.Po ./$(DEPDIR)/registers.Po \
-	./$(DEPDIR)/scanner.Po ./$(DEPDIR)/send_irq.Po \
-	./$(DEPDIR)/trace.Po ./$(DEPDIR)/util.Po
+	./$(DEPDIR)/decode.Po ./$(DEPDIR)/gdb_protocol.Po \
+	./$(DEPDIR)/memory.Po ./$(DEPDIR)/memory_test.Po \
+	./$(DEPDIR)/registers.Po ./$(DEPDIR)/scanner.Po \
+	./$(DEPDIR)/send_irq.Po ./$(DEPDIR)/trace.Po \
+	./$(DEPDIR)/util.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -369,7 +370,7 @@ AM_CFLAGS = -D DEBUG -D WARNING -D BIG_ENDIAN_SIMULATOR
 LDADD = -lpthread
 @HAVE_ARM_COMPILER_TRUE@SUBDIRS = . Examples
 COMMON = csapp.h csapp.c scanner.h scanner.l debug.h debug.c \
-       gdb_protocol.h gdb_protocol.c util.h util.c trace.h trace.c \
+       gdb_protocol.h gdb_protocol.c util.h util.c decode.h decode.c trace.h trace.c \
        memory.h memory.c trace_location.h no_trace_location.h \
        registers.h registers.c \
        arm.h arm.c \
@@ -510,6 +511,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arm_simulator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/csapp.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/debug.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/decode.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdb_protocol.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory_test.Po@am__quote@ # am--include-marker
@@ -895,6 +897,7 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/arm_simulator.Po
 	-rm -f ./$(DEPDIR)/csapp.Po
 	-rm -f ./$(DEPDIR)/debug.Po
+	-rm -f ./$(DEPDIR)/decode.Po
 	-rm -f ./$(DEPDIR)/gdb_protocol.Po
 	-rm -f ./$(DEPDIR)/memory.Po
 	-rm -f ./$(DEPDIR)/memory_test.Po
@@ -961,6 +964,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/arm_simulator.Po
 	-rm -f ./$(DEPDIR)/csapp.Po
 	-rm -f ./$(DEPDIR)/debug.Po
+	-rm -f ./$(DEPDIR)/decode.Po
 	-rm -f ./$(DEPDIR)/gdb_protocol.Po
 	-rm -f ./$(DEPDIR)/memory.Po
 	-rm -f ./$(DEPDIR)/memory_test.Po

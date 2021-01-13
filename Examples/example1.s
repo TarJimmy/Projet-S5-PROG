@@ -1,14 +1,11 @@
 .global main
 .text
-decr:
-    subs r0, r0, #1
-    mov pc, lr
-
 main:
-    mov r0, #5
-loop:
-    bl decr
-    bne loop
-end:
+    ldr r1, =0x20026
+    ldrb  R2, [R0]
     swi 0x123456
 .data
+donnee:
+    .word 0x11223344
+    .word 0x55667788
+fin:

@@ -44,6 +44,7 @@ static int arm_execute_instruction(arm_core p) {
                     if (get_bit(instruction, 4) == 0 || get_bit(instruction, 7) == 0) {
                         // Data processing immediate shift or register shift
                         arm_data_processing(p, instruction);
+                        //arm_data_processing_shift(p, instruction);
                     } else if (get_bit(instruction, 7) == 1 && get_bit(instruction, 4) == 1) {
                         //Extra load/stores
                         arm_load_store(p, instruction);
@@ -54,6 +55,7 @@ static int arm_execute_instruction(arm_core p) {
                 case 1:
                     //MSR: Immediate operand
                     arm_data_processing(p, instruction);
+                    //arm_data_processing_immediate_msr(p, instruction);
                 break;
                 case 2: 
                     //Load and Store: Immediate offset/index
