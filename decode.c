@@ -13,7 +13,7 @@
 
 uint32_t shift(arm_core p, uint32_t instruction, uint32_t* shifter_carry_out){
 	uint32_t shift = get_bits(instruction, 6, 5);
-    uint32_t offset = get_bits(instruction, 3, 0); //shifter_operand = Rm
+    uint32_t offset = arm_read_register(p, get_bits(instruction, 3, 0)); //shifter_operand = Rm
     uint32_t bit_4 = get_bit(instruction, 4); //(shift) 0=valeur_immédiate 1=registre
     uint32_t valeur = 0;
     if (bit_4) {  
@@ -22,7 +22,7 @@ uint32_t shift(arm_core p, uint32_t instruction, uint32_t* shifter_carry_out){
     	uint32_t Rs_7_0 = get_bits(valeur,7,0);
     	uint32_t Rs_4_0 = get_bits(valeur,4,0);
     	switch (shift) {
-		    case 0: //LSL p449
+		    case 0: //LSL
 		    	if (Rs_7_0 == 0) {
 				  *shifter_carry_out = (arm_read_cpsr(p) >> C) & 1;
 				} else if (Rs_7_0 < 32) {
@@ -78,10 +78,10 @@ uint32_t shift(arm_core p, uint32_t instruction, uint32_t* shifter_carry_out){
 		    default:
 		        break;
     	}
-    } else { 
+    } else {
     	valeur = get_bits(instruction, 11, 7);
     	switch (shift) {
-		    case 0: //LSL p449
+		    case 0: //LSL
 		    	*shifter_carry_out = (arm_read_cpsr(p) >> C) & 1; // = C Flag
 		        if (valeur!=0) {
 		        	offset = offset << valeur;
@@ -122,7 +122,6 @@ uint32_t shift(arm_core p, uint32_t instruction, uint32_t* shifter_carry_out){
 		        break;
     	} 
     }
-    
     return offset;
 }
 

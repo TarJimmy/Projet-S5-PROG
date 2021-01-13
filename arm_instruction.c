@@ -34,7 +34,7 @@ static int arm_execute_instruction(arm_core p) {
     uint32_t instruction;
     //Verification fetch memory
     if (arm_fetch(p, &instruction)) {
-        printf("Error: Fetch memory");
+        printf("Error: Fetch memory\n");
     } else {
         //Verification flags
         if(condition(arm_read_cpsr(p), instruction >> 28)) {
@@ -44,8 +44,6 @@ static int arm_execute_instruction(arm_core p) {
                 case 0:
                     if (get_bit(instruction, 4) == 0 || get_bit(instruction, 7) == 0) {
                         // Data processing immediate shift or register shift
-                        debug("processing1");
-                        printf("processing2");
                         arm_data_processing(p, instruction);
                     } else if (get_bit(instruction, 7) == 1 && get_bit(instruction, 4) == 1) {
                         //Extra load/stores

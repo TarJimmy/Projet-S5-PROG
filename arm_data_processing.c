@@ -33,8 +33,7 @@ uint32_t calcul (arm_core p, uint32_t ins, uint32_t value, uint32_t* alu_out){
 	uint8_t Rn = get_bits(ins, 19, 16);
 	uint32_t val_cpsr = arm_read_cpsr(p);
 	int C_flag = (val_cpsr >> C) & 1;
-	debug("Calcul\n");
-	switch (ins>>20)
+	switch (get_bits(ins, 24, 21))
 	{
 		case 0b0000: //AND
 			return (arm_read_register(p, Rn) & value);
@@ -269,27 +268,24 @@ void maj_flags(arm_core p, uint32_t ins, uint32_t alu_out, uint32_t shifter_carr
 int arm_data_processing(arm_core p, uint32_t ins) {
 	uint8_t Rd = get_bits(ins, 15, 12);
 	uint8_t I = get_bit(ins, 25); //0=registre 1=valeur_immediate
-	uint32_t imm = get_bits(ins, 7, 0); //valeur immediate
 	uint8_t rotate_imm = get_bits(ins, 11, 8);
 	uint32_t value;
 	uint32_t shifter_carry_out = 0;
 	uint32_t alu_out;
 	uint8_t error = condition(arm_read_cpsr(p),ins>>28);
 	
-	if (!error) {
-		printf("conditions vérifiees\n");
+	if (error) {
 		if (I){
-			debug("Valeur immediate\n");
+			uint32_t imm = get_bits(ins, 7, 0); //valeur immediate
 			value = calcul(p, ins, imm, &alu_out);
-			debug("Resultat = %d\n", value);
 			if (rotate_imm == 0) { shifter_carry_out = (arm_read_cpsr(p) >> C) & 1; }
 			else {
 				uint32_t shifter_operand = get_bits(ins, 11, 0);
 				shifter_carry_out = get_bit(shifter_operand,31);
 			}
 		} //p446
-		else { debug("Registre/shift\n"); value = calcul(p, ins, shift(p,ins,&shifter_carry_out), &alu_out); debug("Resultat = %d\n", value);}
-		if (Rd!=0) { debug("Ecriure dans rd (r%d)\n", Rd); arm_write_register(p, Rd, value); }
+		else { value = calcul(p, ins, shift(p,ins,&shifter_carry_out), &alu_out); }
+		if (Rd!=0) { arm_write_register(p, Rd, value); }
 		maj_flags(p, ins, alu_out, shifter_carry_out);
 		return 0; //tout c'est bien passe
 	}
