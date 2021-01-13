@@ -1,11 +1,7 @@
 .global main
 .text
 main:
-    ldr r1, =0x20026
-    ldrb  R2, [R0]
+    mov r0, #10
+    sub r0, R0, #4
     swi 0x123456
-.data
-donnee:
-    .word 0x11223344
-    .word 0x55667788
 fin:

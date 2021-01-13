@@ -282,8 +282,13 @@ int arm_data_processing(arm_core p, uint32_t ins) {
 				shifter_carry_out = get_bit(shifter_operand,31);
 			}
 		} //p446
-		else { value = calcul(p, ins, shift(p,ins,&shifter_carry_out), &alu_out);}
-		if (Rd!=0) { arm_write_register(p, Rd, value); }
+		else { 
+			value = calcul(p, ins, shift(p,ins,&shifter_carry_out), &alu_out);
+		}
+		uint8_t bit_ins = get_bits(ins, 24, 21);
+		if (bit_ins != 0b1000 && bit_ins != 0b1001 && bit_ins != 0b1011 && bit_ins != 0b1010) { //TST TEQ CMN CMP 
+			arm_write_register(p, Rd, value); 
+		}
 		maj_flags(p, ins, alu_out, shifter_carry_out);
 		return 0; //tout c'est bien passe
 	}

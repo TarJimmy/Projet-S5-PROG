@@ -6,6 +6,6 @@ uint32_t shift(arm_core p, uint32_t instruction, uint32_t* shifter_carry_out);
 
 int condition(uint32_t cpsr, uint8_t cond);
 
-int condition(uint32_t cpsr, uint8_t cond);
+void update_shifter_carry_out(uint32_t* shifter_carry_out, uint32_t value);
 
 #endif
