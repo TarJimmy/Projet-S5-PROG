@@ -40,38 +40,42 @@ int number_set_bits_in(uint16_t n) {
 }
 
 
+void decode_instruction(uint32_t ins, uint8_t* cond, uint8_t* I_bit, uint8_t* P_bit, uint8_t* U_bit, uint8_t* B_bit, uint8_t* W_bit, uint8_t* L_bit, uint8_t* rn, uint8_t* rd, uint16_t* data) {
+    *cond = get_bits(ins, 31, 28);
+    if (I_bit != NULL) {
+        *I_bit = get_bit(ins, 25);
+    }
+    *P_bit = get_bit(ins, 24);
+    *U_bit = get_bit(ins, 23);
+    *B_bit = get_bit(ins, 22);
+    *W_bit = get_bit(ins, 21);
+    *L_bit = get_bit(ins, 20);
+    *rn = (uint8_t)get_bits(ins, 19, 16);
+    if (rd != NULL) {
+        *rd = (uint8_t)get_bits(ins, 15, 12);
+        *data = (uint16_t)get_bits(ins, 11, 0);
+    } else {
+        *data = get_bits(ins, 15, 0);
+    }
+}
 
 int arm_load_store(arm_core p, uint32_t ins) {
-    uint8_t I_bit = get_bit(ins, 25);
-    uint8_t P_bit = get_bit(ins, 24);
-    uint8_t U_bit = get_bit(ins, 23);
-    uint8_t B_bit = get_bit(ins, 22);
-    uint8_t W_bit = get_bit(ins, 21);
-    uint8_t L_bit = get_bit(ins, 20);
-    uint8_t rn = (uint8_t)get_bits(ins, 19, 16);
-    uint8_t rd = (uint8_t)get_bits(ins, 15, 12);
-    uint16_t data = (uint16_t)get_bits(ins, 11, 0);
-    uint8_t cond = get_bits(ins, 31, 28);
     int result;
     if (get_bits(ins, 27,26) == 0b01) {
         //Load and store word or unsigned byte instructions
-        result = word_byte_load_store(p, I_bit, P_bit, U_bit, B_bit, W_bit, L_bit, rn, rd, data, cond);
+        result = word_byte_load_store(p, ins);
     } else if (get_bits(ins, 27, 25) == 0b000 && get_bit(ins,7) == 1 && get_bit(ins, 4) == 1) {
         //Load and store halfword or doubleword, and load signed byte instructions
-        result = miscellaneous_load_store(p, I_bit, P_bit, U_bit, B_bit, W_bit, L_bit, rn, rd, data, cond);
+        result = miscellaneous_load_store(p, ins);
     }
     return result;
 }
 
 int arm_load_store_multiple(arm_core p, uint32_t ins) {
-    uint8_t cond = get_bits(ins, 31, 28);
-	uint8_t P_bit = get_bit(ins, 24);
-	uint8_t U_bit = get_bit(ins, 23);
-	uint8_t S_bit = get_bit(ins, 22);
-	uint8_t W_bit = get_bit(ins, 21);
-	uint8_t L_bit = get_bit(ins, 20);
-    uint8_t Rn = get_bits(ins, 19, 16);
-	uint16_t register_list = get_bits(ins, 15, 0);
+    uint8_t cond, P_bit, U_bit, S_bit, W_bit, L_bit, Rn;
+	uint16_t register_list;
+
+    decode_instruction(ins, &cond, NULL, &P_bit, &U_bit, &S_bit, &W_bit, &L_bit, &Rn, NULL, &register_list);
 
 	uint32_t cpsr;
 	if (L_bit == 1 && Rn == 15) { // Si c'est un load de PC le bit S indique si CPSR vient de SPSR
@@ -233,7 +237,11 @@ uint32_t read_register_mode(arm_core p, uint8_t reg, uint8_t W_bit) {
  *  B_bit : Distinguishes between an unsigned byte (B==1) and a word (B==0) access
  *  data : bit 0 at 11 
 **/ 
-int word_byte_load_store(arm_core p, uint8_t I_bit, uint8_t P_bit, uint8_t U_bit, uint8_t B_bit, uint8_t W_bit, uint8_t L_bit, uint8_t rn, uint8_t rd, uint16_t data, uint8_t cond) {
+int word_byte_load_store(arm_core p, uint32_t instruction) {
+    uint8_t cond, I_bit, P_bit, U_bit, B_bit, W_bit, L_bit, rn, rd;
+    uint16_t data;
+    decode_instruction(instruction, &cond, &I_bit, &P_bit, &U_bit, &B_bit, &W_bit, &L_bit, &rn, &rd, &data);
+     
     uint32_t address;
     uint16_t offset;
     int error = 0;
@@ -244,35 +252,7 @@ int word_byte_load_store(arm_core p, uint8_t I_bit, uint8_t P_bit, uint8_t U_bit
         offset = arm_read_register(p, rm);
         if (get_bits(data, 11, 4) != 0) {
             //scaled register
-            uint8_t shift = get_bits(data, 6, 5);
-            uint8_t shift_immediat = get_bits(data, 11, 7);
-            switch (shift) {
-                case 0: //LSL
-                    offset = offset << shift_immediat;
-                    break;
-                case 1: //LSR
-                    if (shift_immediat == 0) {
-                        offset = 0;
-                    } else {
-                        offset = offset >> shift_immediat;
-                    }
-                    break;
-                case 2: //ASR
-                    if (shift_immediat == 0) {
-                        asr(offset, 32);
-                    } else {
-                        offset = offset >> shift_immediat;
-                    }
-                    break;
-                    case 3:
-                        if (shift_immediat ==0) {
-                            offset = (arm_read_cpsr(p) << 31) | (offset >> 1) ;
-                        } else {
-                            offset = ror(offset, shift_immediat);
-                        }
-                default:
-                    break;
-            }
+            offset = shift(p, instruction);
         }
     } else {
         //immediate offset
@@ -363,11 +343,14 @@ int word_byte_load_store(arm_core p, uint8_t I_bit, uint8_t P_bit, uint8_t U_bit
     return error;
 }
 
-int miscellaneous_load_store(arm_core p, uint8_t I_bit, uint8_t P_bit, uint8_t U_bit, uint8_t B_bit, uint8_t W_bit, uint8_t L_bit, uint8_t rn, uint8_t rd, uint16_t data, uint8_t cond) {
+int miscellaneous_load_store(arm_core p, uint32_t ins) {
     //Constante
-    uint8_t H_bit = get_bit(data, 5);
-    uint8_t S_bit = get_bit(data, 6);
+    uint8_t H_bit = get_bit(ins, 5);
+    uint8_t S_bit = get_bit(ins, 6);
 
+    uint8_t cond, I_bit, P_bit, U_bit, B_bit, W_bit, L_bit, rn, rd;
+    uint16_t data;
+    decode_instruction(ins, &cond, &I_bit, &P_bit, &U_bit, &B_bit, &W_bit, &L_bit, &rn, &rd, &data);
     //Variable
     uint16_t offset;
     uint32_t address;

@@ -19,7 +19,9 @@ int shift(arm_core p, uint32_t instruction){
     if (bit_4) {  
     	uint8_t Rs = get_bits(instruction, 11, 8);
     	valeur = arm_read_register(p, Rs);
-    } else { valeur = get_bits(instruction, 11, 7); }
+    } else { 
+        valeur = get_bits(instruction, 11, 7); 
+    }
     switch (shift) {
         case 0: //LSL
             offset = offset << valeur;
