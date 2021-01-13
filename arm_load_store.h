@@ -42,9 +42,12 @@ uint32_t handling_offset(uint32_t address,int offset,uint8_t U_bit);
 void write_register_mode(arm_core p, uint8_t reg, uint32_t value, uint8_t W_bit);
 uint32_t read_register_mode(arm_core p, uint8_t reg, uint8_t W_bit);
 
-int word_byte_load_store(arm_core p, uint8_t I_bit, uint8_t P_bit, uint8_t U_bit, uint8_t B_bit, uint8_t W_bit, uint8_t L_bit, uint8_t rn, uint8_t rd, uint16_t data, uint8_t cond);
+int word_byte_load_store(arm_core p, uint32_t ins);
 
-int miscellaneous_load_store(arm_core p, uint8_t I_bit, uint8_t P_bit, uint8_t U_bit, uint8_t B_bit, uint8_t W_bit, uint8_t L_bit, uint8_t rn, uint8_t rd, uint16_t data, uint8_t cond);
+int miscellaneous_load_store(arm_core p, uint32_t ins);
 
 int load_store_half_double_byte (arm_core p, uint8_t rd, uint32_t address, uint8_t L_bit, uint8_t S_bit, uint8_t H_bit, uint8_t cond);
+
+void decode_instruction(uint32_t ins, uint8_t* cond, uint8_t* I_bit, uint8_t* P_bit, uint8_t* U_bit, uint8_t* B_bit, uint8_t* W_bit, uint8_t* L_bit, uint8_t* rn, uint8_t* rd, uint16_t* data);
+
 #endif

@@ -24,6 +24,7 @@ Contact: Guillaume.Huard@imag.fr
 #include "arm_constants.h"
 #include <stdlib.h>
 #include <string.h>
+
 #include "util.h"
 #include <stdio.h>
 

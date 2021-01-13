@@ -45,5 +45,7 @@ void write_spsr(registers r, uint32_t value);
 uint32_t action_register_mode(registers r, uint8_t reg, uint32_t value, uint8_t is_read);
 void write_register_with_mode(registers r, uint8_t reg, uint32_t value);
 uint32_t read_register_with_mode(registers r, uint8_t reg);
+
 uint32_t read_write_register_worker(registers r, uint8_t reg, uint32_t value, uint8_t is_read);
+
 #endif

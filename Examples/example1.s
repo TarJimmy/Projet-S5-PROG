@@ -1,8 +1,8 @@
 .global main
 .text
 main:
-    ldr r1, =donnee
-    ldr r2, =donnee
+    ldr r1, =0x20026
+    ldrb  R2, [R0]
     swi 0x123456
 .data
 donnee:
