@@ -29,24 +29,25 @@ Contact: Guillaume.Huard@imag.fr
 int32_t signed_extend30(uint32_t ins) {
     int32_t mod = get_bits(ins, 23, 0);
     if (get_bit(ins,23)){
-        return (0x3F << 24) | mod;
+        int32_t extension = 0xb111111; 
+        return (extension << 23) | mod;
     } else {
         return mod;
     }
 }
-
+ 
 int arm_branch(arm_core p, uint32_t ins) {
     if(get_bits(ins, 31, 28) != 0xF){
     // B, BL
         if(get_bit(ins, 24)){
-            arm_write_register(p, 14, arm_read_register(p, 15) + 4);
+            arm_write_register(p, 14, arm_read_register(p, 15) - 4);
         }
         arm_write_register(p, 15, arm_read_register(p, 15) + (signed_extend30(ins) << 2));
         return 0;
     }
     return -1;
 }
-
+ 
 int arm_coprocessor_others_swi(arm_core p, uint32_t ins) {
     if (get_bit(ins, 24)) {
         /* Here we implement the end of the simulation as swi 0x123456 */
@@ -56,7 +57,7 @@ int arm_coprocessor_others_swi(arm_core p, uint32_t ins) {
     } 
     return UNDEFINED_INSTRUCTION;
 }
-
+ 
 int arm_miscellaneous(arm_core p, uint32_t ins) {
     // MRS
     if(get_bits(ins, 21, 20) == 0b00) {
