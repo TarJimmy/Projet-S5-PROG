@@ -70,7 +70,7 @@ int memory_read_half(memory mem, uint32_t address, uint16_t *value) {
 
     *value = ((mem->adresses[address] ) << 8)+(mem->adresses[address+1]);
     if (!mem->is_big_endian){
-        *value = (*value << 8) + (*value >> 8);
+        *value = reverse_2(*value);
     }
     return 0;
 }
@@ -83,10 +83,7 @@ int memory_read_word(memory mem, uint32_t address, uint32_t *value) {
 
     *value = ((mem->adresses[address]) << 24)+((mem->adresses[address+1]) << 16)+((mem->adresses[address+2] ) << 8)+(mem->adresses[address+3]);
     if (!mem->is_big_endian){
-        *value = ((*value>>24)&0x000000ff) | 
-                 ((*value<<8)&0x00ff0000) | 
-                 ((*value>>8)&0x0000ff00) | 
-                 ((*value<<24)&0xff000000); 
+        *value = reverse_4(*value);
     }
     return 0;
 }
@@ -105,12 +102,11 @@ int memory_write_half(memory mem, uint32_t address, uint16_t value) {
     }
 
     if (mem->is_big_endian) {
-        mem->adresses[address] = value >> 8;
-        mem->adresses[address+1] = value;
-    } else {
-        mem->adresses[address+1] = value >> 8;
-        mem->adresses[address] = value;
-    }
+        value = reverse_2(value);
+    } 
+    mem->adresses[address+1] = value >> 8;
+    mem->adresses[address] = value;
+    
     return 0;
 }
 
@@ -120,15 +116,12 @@ int memory_write_word(memory mem, uint32_t address, uint32_t value) {
     }
 
    if (mem->is_big_endian) {
-        mem->adresses[address] = value >> 24;
-        mem->adresses[address+1] = value >> 16;
-        mem->adresses[address+2] = value >> 8;
-        mem->adresses[address+3] = value;
-    } else {
-        mem->adresses[address+3] = value >> 24;
-        mem->adresses[address+2] = value >> 16;
-        mem->adresses[address+1] = value >> 8;
-        mem->adresses[address] = value;
-    }
+       value = reverse_4(value);
+    } 
+    mem->adresses[address] = value;
+    mem->adresses[address+1] = value >> 8;
+    mem->adresses[address+2] = value >> 16;
+    mem->adresses[address+3] = value >> 24;
+    
     return 0;
 }
